@@ -2,13 +2,14 @@ package systems.helius.commons.reflection;
 
 import java.lang.invoke.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.*;
 
-public final class ClassAnalyzer {
+public final class ClassIntrospector {
     private static final WeakHashMap<Class<?>, Map<Class<?>, Field[]>> hierarchyCache = new WeakHashMap<>();
     private static final WeakHashMap<Class<?>, List<Field>> flatCache = new WeakHashMap<>();
 
-    private ClassAnalyzer() {}
+    private ClassIntrospector() {}
     /**
      * Get all the fields that are present in members of a given class.
      * Recursively checks up into the class tree of clazz to accumulate members.
@@ -58,19 +59,38 @@ public final class ClassAnalyzer {
     /**
      * Get VarHandles for all the fields present in objects of a class,
      * including those that may not be directly accessible by the specific subclass.
-     * @param clazz
+     * @param clazz to analyze
      * @param lookup from your context.
      *               It is a simple as directly invoking {@link MethodHandles#lookup()} directly as the argument.
      *               This allows usage of your context's access rights and reduces IllegalAccessException likeliness.
+     * @return a list of MethodHandle giving access to the fields within a class as if they were pure getters.
+     * @throws IllegalAccessException
+     */
+    public static List<Accessor> getAllFieldAccessors(Class<?> clazz, MethodHandles.Lookup lookup) throws IllegalAccessException {
+        List<Field> fields = getAllFieldsFlat(clazz);
+        List<Accessor> result = new ArrayList<>(fields.size());
+        for (Field field : fields) {
+            field.setAccessible(true);
+            MethodHandle getter = lookup.unreflectGetter(field);
+            result.add(new Accessor(field, getter));
+        }
+        return result;
+    }
+
+    /**
+     * Map all varhandles of a class in accordance to their full referenced type hierarchy.
+     * @param clazz
+     * @param lookup
+     * @param includeComponentTypes if true, handles of collections/arrays that hold a type X
+     *                              will be included in the list of handles that yield that type.
+     *                                  No matter the value, collections will also be present as themselves.
      * @return
      * @throws IllegalAccessException
      */
-    public static List<VarHandle> getAllFieldHandles(Class<?> clazz, MethodHandles.Lookup lookup) throws IllegalAccessException {
-        Collection<Field> fields = getAllFieldsFlat(clazz);
-        List<VarHandle> result = new ArrayList<>(fields.size());
-        for (Field field : fields) {
-            field.setAccessible(true);
-            result.add(lookup.unreflectVarHandle(field));
-        }
+    public static Map<Type, List<VarHandle>> getAllFieldHandlesByType(Class<?> clazz, MethodHandles.Lookup lookup,
+                                                                      boolean includeComponentTypes) throws IllegalAccessException {
+        var result = new HashMap<Type, List<VarHandle>>();
+
+        return result;
     }
 }
