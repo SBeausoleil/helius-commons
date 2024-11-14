@@ -1,4 +1,4 @@
-package systems.helius.commons.reflection;
+package systems.helius.commons.types;
 
 public class Foo {
     private int a;
