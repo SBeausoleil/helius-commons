@@ -31,4 +31,5 @@ public class BeanIntrospector {
             seekRecursively(targetType, next, context, result, visited);
         }
     }
+
 }

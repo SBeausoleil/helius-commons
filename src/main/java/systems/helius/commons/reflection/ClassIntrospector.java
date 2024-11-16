@@ -88,7 +88,7 @@ public final class ClassIntrospector {
                     field.setAccessible(true);
                 }
                 MethodHandle getter = lookup.unreflectGetter(field);
-                result.add(new Accessor(field, getter));
+                result.add(new Accessor(field, getter::invoke));
             }
         }
         return result;

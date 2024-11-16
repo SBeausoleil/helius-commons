@@ -10,6 +10,8 @@ repositories {
 }
 
 dependencies {
+    implementation group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: '3.0.0'
+
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation group: 'io.github.sbeausoleil', name: 'factorium', version: '2.1.0'

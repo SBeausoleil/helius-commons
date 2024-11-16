@@ -1,5 +1,10 @@
 package systems.helius.commons.reflection;
 
+import systems.helius.commons.reflection.handlers.IterableLazyHandler;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class IntrospectionSettings {
     /**
      * If true (default), only fields and methods that may be accessed according to the rules will be made accessible.
@@ -22,6 +27,12 @@ public class IntrospectionSettings {
      * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html#entrySet()">Java 17 API: Map.entrySet()</a>
      */
     protected boolean detailledMapCheck = false;
+
+    protected List<ValueHandler> specialValueHandlers = new ArrayList<>(
+            List.of(
+                    new IterableLazyHandler()
+            )
+    );
 
     public boolean isSafeAccessCheck() {
         return safeAccessCheck;
