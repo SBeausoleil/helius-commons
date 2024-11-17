@@ -3,6 +3,7 @@ package systems.helius.commons.reflection;
 import jakarta.annotation.Nullable;
 
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -73,7 +74,8 @@ public class BeanIntrospector {
             return;
 
         if ((current instanceof Iterable<?> && !settings.detailledIterableCheck)
-                || (current instanceof Map<?, ?> && !settings.detailledMapCheck)) {
+                || (current instanceof Map<?, ?> && !settings.detailledMapCheck)
+            || current.getClass().isArray()) {
             iterativeScenario(targetType, rootContext, settings, found, visited, depth, current, parent, holdingField);
         } else {
             Lookup lookup = getPrivilegedLookup(current.getClass(), rootContext, parent, false);
@@ -100,7 +102,6 @@ public class BeanIntrospector {
             for (Field field : entry.getValue()) {
                 Object value;
                 try {
-                    //value = currentPrivilegedLookup.unreflectVarHandle(field).get(current);
                     value = currentPrivilegedLookup.unreflectVarHandle(field).get(current);
                 } catch (IllegalAccessException e) {
                     // Shouldn't happen as we are supposed to have a private level of access into the class...
@@ -121,7 +122,18 @@ public class BeanIntrospector {
 
     protected <T> void iterativeScenario(Class<T> targetType, Lookup rootContext, IntrospectionSettings settings, Set<T> found, Set<Object> visited, int depth, Object value, Lookup lookup, Field holdingField) throws TracedAccessException {
         Iterator<?> it;
-        if (value instanceof Iterable<?> i) {
+        if (value.getClass().isArray()) {
+            if (value.getClass().getComponentType().isPrimitive()) {
+                final int LENGTH = Array.getLength(value);
+                ArrayList<Object> list = new ArrayList<>(LENGTH);
+                for (int i = 0; i < LENGTH; i++)
+                    list.add(Array.get(value, i));
+                it = list.iterator();
+                holdingField = SyntheticPrimitiveFields.getSyntheticPrimitiveField(value.getClass().getComponentType());
+            } else {
+                it = Arrays.asList((Object[]) value).iterator();
+            }
+        } else if (value instanceof Iterable<?> i) {
             it = i.iterator();
         } else {
             it = ((Map<?, ?>) value).entrySet().iterator();

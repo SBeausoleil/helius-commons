@@ -1,5 +1,5 @@
 # Common utilities library
-
+Minimum java version: 17
 ## Introspection
 TODO...
 

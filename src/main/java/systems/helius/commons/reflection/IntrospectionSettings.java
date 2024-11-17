@@ -65,4 +65,28 @@ public class IntrospectionSettings {
     public void setDetailledMapCheck(boolean detailledMapCheck) {
         this.detailledMapCheck = detailledMapCheck;
     }
+
+    public boolean isEnterTargetType() {
+        return enterTargetType;
+    }
+
+    public void setEnterTargetType(boolean enterTargetType) {
+        this.enterTargetType = enterTargetType;
+    }
+
+    public int getMaxDepth() {
+        return maxDepth;
+    }
+
+    public void setMaxDepth(int maxDepth) {
+        this.maxDepth = maxDepth;
+    }
+
+    public List<ValueHandler> getSpecialValueHandlers() {
+        return specialValueHandlers;
+    }
+
+    public void setSpecialValueHandlers(List<ValueHandler> specialValueHandlers) {
+        this.specialValueHandlers = specialValueHandlers;
+    }
 }
