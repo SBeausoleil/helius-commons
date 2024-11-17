@@ -15,25 +15,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BeanIntrospectorTest {
     @Test
-    void legacy_WhenSeekInDataClass_GivenSeekWithoutGettersAndTargetInt_ThenFindAllInstances() throws IllegalAccessException {
-        int first = 1;
-        int second = 6;
-        DataClassWithoutGetters simple = new DataClassWithoutGetters(
-                first,
-                second,
-                "Hello",
-                "World",
-                9L,
-                -15,
-                first
-        );
-        Set<Integer> found = BeanIntrospector.seekIn(int.class, simple, MethodHandles.lookup());
-        assertEquals(2, found.size());
-        assertTrue(found.contains(first));
-        assertTrue(found.contains(second));
-    }
-
-    @Test
     void WhenSeekInt_GivenObjectWithInheritance_ThenAlsoFindInSuperclass() throws IllegalAccessException {
         int first = 1;
         int second = 6;
@@ -67,5 +48,13 @@ class BeanIntrospectorTest {
         FooCollection fooCollection = fooCollectionGenerator.generate();
         Set<Foo> found = new BeanIntrospector().seek(Foo.class, fooCollection, MethodHandles.lookup());
         assertEquals(fooCollection.totalElements(), found.size());
+    }
+
+    @Test
+    void WhenSeekIterable_GivenClassWithIterables_ThenFindIterables() throws IllegalAccessException {
+        FooCollectionGenerator fooCollectionGenerator = new FooCollectionGenerator();
+        FooCollection fooCollection = fooCollectionGenerator.generate();
+        Set<Iterable> found = new BeanIntrospector().seek(Iterable.class, fooCollection, MethodHandles.lookup());
+        assertEquals(2, found.size());
     }
 }

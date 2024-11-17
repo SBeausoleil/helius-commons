@@ -1,5 +1,8 @@
 package systems.helius.commons.collections;
 
+import systems.helius.commons.annotations.Internal;
+import systems.helius.commons.annotations.Unstable;
+
 import java.util.*;
 
 /**
@@ -20,6 +23,7 @@ public class BiDirectionalMap<K, T> implements Map<K, T> {
 
     // Not sure, as this could allow keeping control of the maps externally and altering them,
     // thus rendering this map in an invalid state
+    @Internal
     public BiDirectionalMap(Map<K, T> keyMap, Map<T, K> valueMap) {
         if (!keyMap.isEmpty())
             throw new IllegalArgumentException("keyMap must be empty");

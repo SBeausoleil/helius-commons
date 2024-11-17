@@ -20,29 +20,6 @@ public class BeanIntrospector {
         this.defaults = defaults;
     }
 
-    public static <T> Set<T> seekIn(Class<T> targetType, Object root, Lookup context)
-            throws IllegalAccessException {
-        if (root == null) {
-            return Collections.emptySet();
-        }
-        Set<T> found = Collections.newSetFromMap(new WeakHashMap<>());
-        seekRecursively(targetType, root, context, found, Collections.newSetFromMap(new WeakHashMap<>()));
-        return found;
-    }
-
-    private static <T> void seekRecursively(Class<T> targetType, Object current, Lookup context,
-                                            Set<T> result, Set<Object> visited) throws IllegalAccessException {
-        if (visited.contains(current)) return;
-        visited.add(current);
-        for (Accessor accessor : ClassIntrospector.getAllFieldAccessors(current.getClass(), context)) {
-            Object next = accessor.get(current);
-            if (targetType.isAssignableFrom(accessor.getDeclaredType()) && next != null) {
-                result.add((T) next);
-            }
-            seekRecursively(targetType, next, context, result, visited);
-        }
-    }
-
     /*
     Introspection algorithm:
     - 0: Add current object to "visited" set
@@ -74,12 +51,12 @@ public class BeanIntrospector {
         return found;
     }
 
-    private <T> void depthFirstSearch(Class<T> targetType, Object current, @Nullable Field holdingField,
-                                      Lookup rootContext, Lookup parent,
-                                      IntrospectionSettings settings,
-                                      Set<T> found, Set<Object> visited,
-                                      int depth) throws TracedAccessException {
-        if (current == null  || depth >= settings.maxDepth || visited.contains(current))
+    protected <T> void depthFirstSearch(Class<T> targetType, Object current, @Nullable Field holdingField,
+                                        Lookup rootContext, Lookup parent,
+                                        IntrospectionSettings settings,
+                                        Set<T> found, Set<Object> visited,
+                                        int depth) throws TracedAccessException {
+        if (current == null || depth >= settings.maxDepth || visited.contains(current))
             return;
         visited.add(current);
         depth++;
@@ -95,27 +72,30 @@ public class BeanIntrospector {
         if (current.getClass().isPrimitive() || ClassIntrospector.isPrimitiveWrapper(current.getClass()))
             return;
 
-        Lookup lookup = getPrivilegedLookup(current.getClass(), rootContext, parent);
-
         if ((current instanceof Iterable<?> && !settings.detailledIterableCheck)
                 || (current instanceof Map<?, ?> && !settings.detailledMapCheck)) {
-            iterativeScenario(targetType, rootContext, settings, found, visited, depth, current, lookup, holdingField);
+            iterativeScenario(targetType, rootContext, settings, found, visited, depth, current, parent, holdingField);
         } else {
-            singularObjectScenario(targetType, current, rootContext, settings, found, visited, depth, lookup);
+            Lookup lookup = getPrivilegedLookup(current.getClass(), rootContext, parent, false);
+            singularObjectScenario(targetType, current, rootContext, settings, found, visited, depth, lookup, holdingField);
         }
     }
 
-    private <T> void singularObjectScenario(Class<T> targetType, Object current,
-                                            Lookup rootContext, IntrospectionSettings settings,
-                                            Set<T> found, Set<Object> visited, int depth,
-                                            Lookup currentPrivilegedLookup) throws TracedAccessException {
+    protected <T> void singularObjectScenario(Class<T> targetType, Object current,
+                                              Lookup rootContext, IntrospectionSettings settings,
+                                              Set<T> found, Set<Object> visited, int depth,
+                                              Lookup currentPrivilegedLookup, Field holdingField) throws TracedAccessException {
         LinkedHashMap<Class<?>, Field[]> fields = ClassIntrospector.getAllFieldsHierarchical(current.getClass());
         if (fields.isEmpty()) return;
 
         for (Map.Entry<Class<?>, Field[]> entry : fields.entrySet()) {
             if (currentPrivilegedLookup.lookupClass() != entry.getKey()) {
                 // This grants access to the private fields within superclasses
-                currentPrivilegedLookup = getPrivilegedLookup(entry.getKey(), currentPrivilegedLookup, rootContext);
+                try {
+                    currentPrivilegedLookup = getPrivilegedLookup(entry.getKey(), currentPrivilegedLookup, rootContext, true);
+                } catch (TracedAccessException e) {
+                    e.addStep(holdingField);
+                }
             }
             for (Field field : entry.getValue()) {
                 Object value;
@@ -130,12 +110,7 @@ public class BeanIntrospector {
                 }
                 if (value != null) {
                     try {
-                        if ((value instanceof Iterable<?> && !settings.detailledIterableCheck)
-                                || (value instanceof Map<?, ?> && !settings.detailledMapCheck)) {
-                            iterativeScenario(targetType, rootContext, settings, found, visited, depth, value, currentPrivilegedLookup, field);
-                        } else {
-                            depthFirstSearch(targetType, value, field, rootContext, currentPrivilegedLookup, settings, found, visited, depth + 1);
-                        }
+                        depthFirstSearch(targetType, value, field, rootContext, currentPrivilegedLookup, settings, found, visited, depth + 1);
                     } catch (TracedAccessException e) {
                         e.addStep(field);
                     }
@@ -144,7 +119,7 @@ public class BeanIntrospector {
         }
     }
 
-    private <T> void iterativeScenario(Class<T> targetType, Lookup rootContext, IntrospectionSettings settings, Set<T> found, Set<Object> visited, int depth, Object value, Lookup lookup, Field holdingField) throws TracedAccessException {
+    protected <T> void iterativeScenario(Class<T> targetType, Lookup rootContext, IntrospectionSettings settings, Set<T> found, Set<Object> visited, int depth, Object value, Lookup lookup, Field holdingField) throws TracedAccessException {
         Iterator<?> it;
         if (value instanceof Iterable<?> i) {
             it = i.iterator();
@@ -157,36 +132,38 @@ public class BeanIntrospector {
     }
 
     /**
-     * Attempts to get a privileged lookup on a target class.
+     * Attempts to get a privileged (private-level access) lookup on a target class.
      *
-     * @param type
-     * @param rootContext
-     * @param parent
-     * @return
+     * @param target        the class on which a privileged lookup is desired.
+     * @param rootContext   the original context of the request. Will be used as a backup if the parent may not grant privileged-access.
+     * @param parent        the lookup on the class that owns the field where the target is the type.
+     * @param forSuperclass indicates that the lookup is being made for the superclass of the parent.
+     * @return a privileged lookup.
      */
-    protected MethodHandles.Lookup getPrivilegedLookup(Class<?> type, MethodHandles.Lookup rootContext, MethodHandles.Lookup parent) throws TracedAccessException {
-        MethodHandles.Lookup acquiredAccess = privilegedLookups.get(type);
+    protected MethodHandles.Lookup getPrivilegedLookup(Class<?> target, MethodHandles.Lookup rootContext, MethodHandles.Lookup parent, boolean forSuperclass) throws TracedAccessException {
+        MethodHandles.Lookup acquiredAccess = privilegedLookups.get(target);
         if (acquiredAccess != null)
             return acquiredAccess;
 
         try { // Check if the direct parent has access
-            acquiredAccess = MethodHandles.privateLookupIn(type, parent);
+            acquiredAccess = MethodHandles.privateLookupIn(target, parent);
         } catch (IllegalAccessException parentException) {
             try { // Fallback on the root context: perhaps the parent is part of a library who is not allowed such privileges
-                acquiredAccess = MethodHandles.privateLookupIn(type, rootContext);
+                acquiredAccess = MethodHandles.privateLookupIn(target, rootContext);
             } catch (IllegalAccessException rootContextException) {
                 try { // Last resort: maybe this library is afforded the privilege by the type's module.
-                    acquiredAccess = MethodHandles.privateLookupIn(type, MethodHandles.lookup());
+                    acquiredAccess = MethodHandles.privateLookupIn(target, MethodHandles.lookup());
                 } catch (IllegalAccessException libraryLookupException) {
                     // TODO In case of final failure, attempt to find an accessible getter method
-                    throw new TracedAccessException("Couldn't get privileged lookup access into: " + type.getCanonicalName()
-                            + ".\n Parent class: " + parentException.getMessage()
+                    throw new TracedAccessException("Couldn't get privileged lookup access into: " + target.getCanonicalName()
+                            + (forSuperclass ? "\n Accessing superclass of: " + parent.lookupClass()
+                                            : ".\n Parent class: " + parentException.getMessage())
                             + ",\n root context: " + rootContextException.getMessage()
                             + ",\n library context: " + libraryLookupException.getMessage());
                 }
             }
         }
-        this.privilegedLookups.put(type, acquiredAccess);
+        this.privilegedLookups.put(target, acquiredAccess);
         return acquiredAccess;
     }
 

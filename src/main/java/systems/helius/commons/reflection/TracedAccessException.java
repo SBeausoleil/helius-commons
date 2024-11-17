@@ -1,12 +1,14 @@
 package systems.helius.commons.reflection;
 
 import jakarta.annotation.Nullable;
+import systems.helius.commons.annotations.Internal;
 
 import java.io.Serial;
 import java.lang.reflect.Field;
 import java.util.Stack;
 
-class TracedAccessException extends Exception {
+@Internal
+public class TracedAccessException extends Exception {
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -23,8 +25,9 @@ class TracedAccessException extends Exception {
         super(message, cause);
     }
 
-    public void addStep(Field step) {
-        trace.push(step);
+    public void addStep(@Nullable Field step) {
+        if (step != null)
+            trace.push(step);
     }
 
     private String buildMessage() {
