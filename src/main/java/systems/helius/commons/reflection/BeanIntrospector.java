@@ -40,9 +40,21 @@ public class BeanIntrospector {
         - 2.6: Enter the value for introspection
     - 3: Once no more fields: return (go back one level)
      */
+
+    /**
+     * Seek within the root and all children for instances of a given type.
+     * Warning! The returned set uses object identity (==), not equals() as is usually the case with sets.
+     * @param targetType
+     * @param root
+     * @param context
+     * @return
+     * @param <T>
+     * @throws IllegalAccessException
+     * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/IdentityHashMap.html">Java 17 API: IdentitHashMap</a>
+     */
     public <T> Set<T> seek(Class<T> targetType, Object root, Lookup context/*, IntrospectionSettings introspectionOverrides TODO*/) throws IllegalAccessException {
-        Set<T> found = Collections.newSetFromMap(new WeakHashMap<>());
-        Set<Object> visited = Collections.newSetFromMap(new WeakHashMap<>());
+        Set<T> found = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         try {
             depthFirstSearch(targetType, root, null, context, context, defaults, found, visited, 0);
         } catch (TracedAccessException e) {
@@ -165,13 +177,13 @@ public class BeanIntrospector {
 
         try { // Check if the direct parent has access
             acquiredAccess = MethodHandles.privateLookupIn(target, parent);
-        } catch (IllegalAccessException parentException) {
+        } catch (IllegalAccessException | SecurityException parentException) {
             try { // Fallback on the root context: perhaps the parent is part of a library who is not allowed such privileges
                 acquiredAccess = MethodHandles.privateLookupIn(target, rootContext);
-            } catch (IllegalAccessException rootContextException) {
+            } catch (IllegalAccessException | SecurityException rootContextException) {
                 try { // Last resort: maybe this library is afforded the privilege by the type's module.
                     acquiredAccess = MethodHandles.privateLookupIn(target, MethodHandles.lookup());
-                } catch (IllegalAccessException libraryLookupException) {
+                } catch (IllegalAccessException | SecurityException libraryLookupException) {
                     // IMPROVEMENT In case of final failure, attempt to find an accessible getter method
                     throw new TracedAccessException("Couldn't get privileged lookup access into: " + target.getCanonicalName()
                             + (forSuperclass ? "\n Accessing superclass of: " + parent.lookupClass()

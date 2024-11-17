@@ -96,7 +96,7 @@ public final class ClassIntrospector {
             if (holdingField.getType().isPrimitive()) {
                 return targetType == PRIMITIVE_WRAPPERS.get(value.getClass());
             } else if (Iterable.class.isAssignableFrom(holdingField.getType())) {
-                // TODO handle
+                // TODO handle RE: doesn't seem to ever be needed
             }
         }
         return targetType.isAssignableFrom(value.getClass());

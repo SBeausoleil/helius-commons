@@ -44,7 +44,7 @@ class BeanIntrospectorTest {
         var foo = fooGenerator.generate();
         Set<Integer> found = new BeanIntrospector().seek(int.class, foo, MethodHandles.lookup());
         assertEquals(1, found.size());
-        assertTrue(found.contains(foo.getA()));
+        assertTrue(found.stream().anyMatch(f -> f.equals(foo.getA())));
     }
 
     @Test
@@ -110,6 +110,21 @@ class BeanIntrospectorTest {
     }
 
     @Test
+    void WhenSeekPrimitiveArray_GivenNestedPrimitiveArray_ThenFindAll() throws IllegalAccessException {
+        long[][][][] multiDimensionalArray = new long[3][3][3][];
+        final int N_GENERATED = multiDimensionalArray.length * multiDimensionalArray[0].length * multiDimensionalArray[0][0].length;
+        for (int i = 0; i < multiDimensionalArray.length; i++) {
+            for (int j = 0; j < multiDimensionalArray[i].length; j++) {
+                for (int k = 0; k < multiDimensionalArray[i][j].length; k++) {
+                    multiDimensionalArray[i][j][k] = ThreadLocalRandom.current().longs(1).toArray();
+                }
+            }
+        }
+        Set<long[]> found = new BeanIntrospector().seek(long[].class, multiDimensionalArray, MethodHandles.lookup());
+        assertEquals(N_GENERATED, found.size());
+    }
+
+    @Test
     void WhenSeekPrimitiveWrapper_GivenClassWithMixedPrimitivesAndWrappers_ThenOnlyFindWrappers() throws IllegalAccessException {
         int first = -15;
         int second = 16;
@@ -126,5 +141,54 @@ class BeanIntrospectorTest {
         assertEquals(2, found.size());
         assertTrue(found.contains(first));
         assertTrue(found.contains(second));
+    }
+
+    @Test
+    void WhenSeekObject_GivenReferenceLoop_ThenFindAll() throws IllegalAccessException {
+        var first = new ChainLink(null);
+        var second = new ChainLink(first);
+        var third = new ChainLink(second);
+        var fourth = new ChainLink(third);
+        fourth.setNext(first);
+
+        Set<ChainLink> found = new BeanIntrospector().seek(ChainLink.class, first, MethodHandles.lookup());
+        assertEquals(4, found.size());
+    }
+
+    @Test
+    void WhenSeek_GivenComplexStructureWithHiddenStrata_ThenFindEvenWithinHiddenStrata() throws IllegalAccessException {
+        var firstId = new ComplexStructure.MiddleStrata.IntHolder(1);
+        var secondId = new ComplexStructure.MiddleStrata.IntHolder(2);
+        var structure = new ComplexStructure(firstId, secondId);
+
+        Set<ComplexStructure.MiddleStrata.IntHolder> found = new BeanIntrospector().seek(
+                ComplexStructure.MiddleStrata.IntHolder.class, structure, MethodHandles.lookup());
+        assertEquals(2, found.size());
+        assertTrue(found.contains(firstId));
+        assertTrue(found.contains(secondId));
+    }
+
+    @Test
+    void WhenSeek_GivenEqualButDifferentInstances_ThenFindAll() throws IllegalAccessException {
+        var firstId = new ComplexStructure.MiddleStrata.IntHolder(1);
+        var secondId = new ComplexStructure.MiddleStrata.IntHolder(1);
+        var structure = new ComplexStructure(firstId, secondId);
+
+        Set<ComplexStructure.MiddleStrata.IntHolder> found = new BeanIntrospector().seek(
+                ComplexStructure.MiddleStrata.IntHolder.class, structure, MethodHandles.lookup());
+        assertEquals(2, found.size());
+        assertTrue(found.contains(firstId));
+        assertTrue(found.contains(secondId));
+    }
+
+    @Test
+    void WhenSeek_GivenSharedInstances_ThenFindOnlyDifferentInstances() throws IllegalAccessException {
+        var firstId = new ComplexStructure.MiddleStrata.IntHolder(1);
+        var structure = new ComplexStructure(firstId, firstId);
+
+        Set<ComplexStructure.MiddleStrata.IntHolder> found = new BeanIntrospector().seek(
+                ComplexStructure.MiddleStrata.IntHolder.class, structure, MethodHandles.lookup());
+        assertEquals(1, found.size());
+        assertTrue(found.contains(firstId));
     }
 }
