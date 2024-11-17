@@ -13,6 +13,8 @@ public class BeanIntrospector {
     protected IntrospectionSettings defaults;
     protected Map<Class<?>, MethodHandles.Lookup> privilegedLookups = new HashMap<>();
 
+    // IMPROVEMENT a map of fields and varhandles that are already known to resolve them?
+
     public BeanIntrospector() {
         defaults = new IntrospectionSettings();
     }
@@ -166,7 +168,7 @@ public class BeanIntrospector {
                 try { // Last resort: maybe this library is afforded the privilege by the type's module.
                     acquiredAccess = MethodHandles.privateLookupIn(target, MethodHandles.lookup());
                 } catch (IllegalAccessException libraryLookupException) {
-                    // TODO In case of final failure, attempt to find an accessible getter method
+                    // IMPROVEMENT In case of final failure, attempt to find an accessible getter method
                     throw new TracedAccessException("Couldn't get privileged lookup access into: " + target.getCanonicalName()
                             + (forSuperclass ? "\n Accessing superclass of: " + parent.lookupClass()
                                             : ".\n Parent class: " + parentException.getMessage())
