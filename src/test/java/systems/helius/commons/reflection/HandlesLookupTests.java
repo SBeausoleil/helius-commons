@@ -106,7 +106,16 @@ public class HandlesLookupTests {
         //assertEquals("Foo", field.get(foo));
 
         Lookup privateLookup = MethodHandles.privateLookupIn(ChildClassA.class, origin);
-        privateLookup.findVarHandle(ChildClassA.class, "name", String.class);
-        assertEquals("Foo", field.get(foo));
+        VarHandle handle = privateLookup.findVarHandle(ChildClassA.class, "name", String.class);
+        assertEquals("Foo", handle.get(foo));
+    }
+
+    @Test
+    public void testAccessToInheritedPrivateFields() throws NoSuchFieldException, IllegalAccessException {
+        var child = new ChildClassA(5, "Foo");
+
+        Lookup privateLookup = MethodHandles.privateLookupIn(Superclass.class, MethodHandles.lookup());
+        VarHandle handle = privateLookup.findVarHandle(ChildClassA.class, "superclassField", int.class);
+        assertEquals(5, handle.get(child));
     }
 }

@@ -3,6 +3,8 @@ package systems.helius.commons.reflection;
 import org.junit.jupiter.api.Test;
 import systems.helius.commons.types.DataClassWithoutGetters;
 import systems.helius.commons.types.Foo;
+import systems.helius.commons.types.FooCollection;
+import systems.helius.commons.types.FooCollectionGenerator;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashSet;
@@ -32,7 +34,7 @@ class BeanIntrospectorTest {
     }
 
     @Test
-    void WhenSeekInDataClass_GivenSeekWithoutGettersAndTargetInt_ThenFindAllInstances() throws IllegalAccessException {
+    void WhenSeekInt_GivenObjectWithInheritance_ThenAlsoFindInSuperclass() throws IllegalAccessException {
         int first = 1;
         int second = 6;
         DataClassWithoutGetters simple = new DataClassWithoutGetters(
@@ -51,11 +53,19 @@ class BeanIntrospectorTest {
     }
 
     @Test
-    void WhenSeekInDataClass_GivenSimpleClass_ThenFindAllInstances() throws IllegalAccessException {
+    void WhenSeekInt_GivenSimpleClass_ThenFindAll() throws IllegalAccessException {
         int second = 6;
         var foo = new Foo(second, "Hello");
         Set<Integer> found = new BeanIntrospector().seek(int.class, foo, MethodHandles.lookup());
         assertEquals(1, found.size());
         assertTrue(found.contains(second));
+    }
+
+    @Test
+    void WhenSeekInt_GivenCollectionsWrapper_ThenFindAll() throws IllegalAccessException {
+        FooCollectionGenerator fooCollectionGenerator = new FooCollectionGenerator();
+        FooCollection fooCollection = fooCollectionGenerator.generate();
+        Set<Foo> found = new BeanIntrospector().seek(Foo.class, fooCollection, MethodHandles.lookup());
+        assertEquals(fooCollection.totalElements(), found.size());
     }
 }

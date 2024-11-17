@@ -85,14 +85,14 @@ public class BeanIntrospector {
         depth++;
 
 
-        if (evaluateTypingMatch(targetType, current, holdingField)) {
+        if (ClassIntrospector.evaluateTypingMatch(targetType, current, holdingField)) {
             //noinspection unchecked covered by the static isAssignableFrom
             found.add((T) current);
             if (!settings.enterTargetType)
                 return;
         }
 
-        if (current.getClass().isPrimitive())
+        if (current.getClass().isPrimitive() || ClassIntrospector.isPrimitiveWrapper(current.getClass()))
             return;
 
         Lookup lookup = getPrivilegedLookup(current.getClass(), rootContext, parent);
@@ -101,38 +101,44 @@ public class BeanIntrospector {
                 || (current instanceof Map<?, ?> && !settings.detailledMapCheck)) {
             iterativeScenario(targetType, rootContext, settings, found, visited, depth, current, lookup, holdingField);
         } else {
-            singleValueScenario(targetType, current, rootContext, settings, found, visited, depth, lookup);
+            singularObjectScenario(targetType, current, rootContext, settings, found, visited, depth, lookup);
         }
     }
 
-    private <T> void singleValueScenario(Class<T> targetType, Object current,
-                                         Lookup rootContext, IntrospectionSettings settings,
-                                         Set<T> found, Set<Object> visited, int depth,
-                                         Lookup currentPrivilegedLookup) throws TracedAccessException {
-        List<Field> fields = ClassIntrospector.getAllFieldsFlat(current.getClass());
+    private <T> void singularObjectScenario(Class<T> targetType, Object current,
+                                            Lookup rootContext, IntrospectionSettings settings,
+                                            Set<T> found, Set<Object> visited, int depth,
+                                            Lookup currentPrivilegedLookup) throws TracedAccessException {
+        LinkedHashMap<Class<?>, Field[]> fields = ClassIntrospector.getAllFieldsHierarchical(current.getClass());
         if (fields.isEmpty()) return;
 
-        for (Field field : fields) {
-            Object value;
-            try {
-                //value = currentPrivilegedLookup.unreflectVarHandle(field).get(current);
-                value = currentPrivilegedLookup.unreflectVarHandle(field).get(current);
-            } catch (IllegalAccessException e) {
-                // Shouldn't happen as we are supposed to have a private level of access into the class...
-                throw new TracedAccessException("Couldn't read the value of the field: " + field
-                        + ". This really shouldn't happen. " +
-                        "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues describing how this happened.", e);
+        for (Map.Entry<Class<?>, Field[]> entry : fields.entrySet()) {
+            if (currentPrivilegedLookup.lookupClass() != entry.getKey()) {
+                // This grants access to the private fields within superclasses
+                currentPrivilegedLookup = getPrivilegedLookup(entry.getKey(), currentPrivilegedLookup, rootContext);
             }
-            if (value != null) {
+            for (Field field : entry.getValue()) {
+                Object value;
                 try {
-                    if ((value instanceof Iterable<?> && !settings.detailledIterableCheck)
-                            || (value instanceof Map<?, ?> && !settings.detailledMapCheck)) {
-                        iterativeScenario(targetType, rootContext, settings, found, visited, depth, value, currentPrivilegedLookup, field);
-                    } else {
-                        depthFirstSearch(targetType, value, field, rootContext, currentPrivilegedLookup, settings, found, visited, depth + 1);
+                    //value = currentPrivilegedLookup.unreflectVarHandle(field).get(current);
+                    value = currentPrivilegedLookup.unreflectVarHandle(field).get(current);
+                } catch (IllegalAccessException e) {
+                    // Shouldn't happen as we are supposed to have a private level of access into the class...
+                    throw new TracedAccessException("Couldn't read the value of the field: " + field
+                            + ". This should be impossible. " +
+                            "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues describing how this happened.", e);
+                }
+                if (value != null) {
+                    try {
+                        if ((value instanceof Iterable<?> && !settings.detailledIterableCheck)
+                                || (value instanceof Map<?, ?> && !settings.detailledMapCheck)) {
+                            iterativeScenario(targetType, rootContext, settings, found, visited, depth, value, currentPrivilegedLookup, field);
+                        } else {
+                            depthFirstSearch(targetType, value, field, rootContext, currentPrivilegedLookup, settings, found, visited, depth + 1);
+                        }
+                    } catch (TracedAccessException e) {
+                        e.addStep(field);
                     }
-                } catch (TracedAccessException e) {
-                    e.addStep(field);
                 }
             }
         }
@@ -184,43 +190,5 @@ public class BeanIntrospector {
         return acquiredAccess;
     }
 
-    /**
-     *
-     * @param targetType the sought type
-     * @param value the object being checked
-     * @param holdingField Because of implicit casting rules in the Java Language, primitives are implicitly converted
-     *                     to their wrapper type when passed to a method that takes an Object. Passing the field
-     *                     that held the value allows us to deduce the correct true type of the value.
-     * @return true if the real type of the value is the target type
-     */
-    public static boolean evaluateTypingMatch(Class<?> targetType, Object value, @Nullable Field holdingField) {
-        if (holdingField != null) {
-            if (holdingField.getType() == Void.class)
-                return true;
 
-            if (holdingField.getType().isPrimitive()) {
-                switch (holdingField.getType().getName()) {
-                    case "boolean":
-                        return value.getClass() == Boolean.class;
-                    case "byte":
-                        return value.getClass() == Byte.class;
-                    case "char":
-                        return value.getClass() == Character.class;
-                    case "short":
-                        return value.getClass() == Short.class;
-                    case "int":
-                        return value.getClass() == Integer.class;
-                    case "long":
-                        return value.getClass() == Long.class;
-                    case "float":
-                        return value.getClass() == Float.class;
-                    case "double":
-                        return value.getClass() == Double.class;
-                }
-            } else if (Iterable.class.isAssignableFrom(holdingField.getType())) {
-                // TODO handle
-            }
-        }
-        return targetType.isAssignableFrom(value.getClass());
-    }
 }
