@@ -5,6 +5,7 @@ import systems.helius.commons.reflection.handlers.IterableLazyHandler;
 import java.util.ArrayList;
 import java.util.List;
 
+// TODO create a settings overrides builder for the bean introspection
 public class IntrospectionSettings {
     /**
      * If true (default), only fields and methods that may be accessed according to the rules will be made accessible.
@@ -14,7 +15,6 @@ public class IntrospectionSettings {
      *
      */
     protected boolean safeAccessCheck = true;
-
     /**
      * If true, Iterable classes will have their internals inspected as if they were a regular class.
      * If false (default), Iterable classes will only have their iterable elements inspected.
@@ -28,6 +28,14 @@ public class IntrospectionSettings {
      */
     protected boolean detailledMapCheck = false;
 
+    /**
+     * If true (default), instances of the target type will also be introspected for more instances.
+     */
+    protected boolean enterTargetType = true;
+
+    protected int maxDepth = Integer.MAX_VALUE;
+
+    @Deprecated
     protected List<ValueHandler> specialValueHandlers = new ArrayList<>(
             List.of(
                     new IterableLazyHandler()

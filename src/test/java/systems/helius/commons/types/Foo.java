@@ -8,4 +8,9 @@ public class Foo {
         this.a = a;
         this.b = b;
     }
+
+    public int getA() {
+        System.out.println("Getting A through it's real getter!");
+        return a;
+    }
 }
