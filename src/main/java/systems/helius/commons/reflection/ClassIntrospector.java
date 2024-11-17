@@ -2,12 +2,8 @@ package systems.helius.commons.reflection;
 
 import jakarta.annotation.Nullable;
 import systems.helius.commons.collections.BiDirectionalMap;
-import systems.helius.commons.collections.MapUtils;
 
-import java.lang.invoke.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 import java.util.*;
 
 public final class ClassIntrospector {
@@ -79,64 +75,6 @@ public final class ClassIntrospector {
             }
             result = Arrays.asList(buffer);
             flatCache.put(clazz, result);
-        }
-        return result;
-    }
-
-    /**
-     * Get VarHandles for all the fields present in objects of a class,
-     * including those that may not be directly accessible by the specific subclass.
-     * Only instance fields are taken, static fields are ignored.
-     * @param clazz to analyze
-     * @param lookup from your context.
-     *               It is a simple as directly invoking {@link MethodHandles#lookup()} directly as the argument.
-     *               This allows usage of your context's access rights and reduces IllegalAccessException likeliness.
-     * @return a list of MethodHandle giving access to the fields within a class as if they were pure getters.
-     * @throws IllegalAccessException
-     */
-    public static List<Accessor> getAllFieldAccessors(Class<?> clazz, MethodHandles.Lookup lookup) throws IllegalAccessException {
-        return getAllFieldAccessors(clazz, lookup, new IntrospectionSettings());
-    }
-
-    public static List<Accessor> getAllFieldAccessors(Class<?> clazz, MethodHandles.Lookup lookup, IntrospectionSettings settings) throws IllegalAccessException {
-        if (settings == null) settings = new IntrospectionSettings();
-
-        List<Field> fields = getAllFieldsFlat(clazz);
-        List<Accessor> result = new ArrayList<>(fields.size());
-        for (Field field : fields) {
-            if (!Modifier.isStatic(field.getModifiers())) {
-                if (settings.isSafeAccessCheck()) {
-                    if (!field.trySetAccessible())
-                        continue;
-                } else {
-                    field.setAccessible(true);
-                }
-                MethodHandle getter = lookup.unreflectGetter(field);
-                result.add(new Accessor(field, getter::invoke));
-            }
-        }
-        return result;
-    }
-
-
-    /**
-     * Map all accessors to the covalent types of their inner value.
-     * @param clazz
-     * @param lookup
-     * @param includeComponentTypes if true, accessors of a parameterized type that hold a reference to said type will be part of the returned value.
-     *                              will be included in the list of handles that yield that type.
-     *                                  No matter the value, collections will also be present as themselves.
-     * @return
-     * @throws IllegalAccessException
-     */
-    public static Map<Type, List<Accessor>> getAllAccessorsByType(Class<?> clazz, MethodHandles.Lookup lookup,
-                                                                  boolean includeComponentTypes) throws IllegalAccessException {
-        var result = new HashMap<Type, List<Accessor>>();
-        for (Accessor accessor : getAllFieldAccessors(clazz, lookup)) {
-            MapUtils.putIntoMultiMap(result, accessor.getDeclaredType(), accessor);
-            for (Class<?> superclass : accessor.getDeclaredType().getDeclaredClasses()) {
-                MapUtils.putIntoMultiMap(result, superclass, accessor);
-            }
         }
         return result;
     }

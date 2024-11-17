@@ -59,7 +59,7 @@ public class BeanIntrospector {
                                         IntrospectionSettings settings,
                                         Set<T> found, Set<Object> visited,
                                         int depth) throws TracedAccessException {
-        if (current == null || depth >= settings.maxDepth || visited.contains(current))
+        if (current == null || depth >= settings.getMaxDepth() || visited.contains(current))
             return;
         visited.add(current);
         depth++;
@@ -68,15 +68,15 @@ public class BeanIntrospector {
         if (ClassIntrospector.evaluateTypingMatch(targetType, current, holdingField)) {
             //noinspection unchecked covered by the static isAssignableFrom
             found.add((T) current);
-            if (!settings.enterTargetType)
+            if (!settings.isEnterTargetType())
                 return;
         }
 
         if (current.getClass().isPrimitive() || ClassIntrospector.isPrimitiveWrapper(current.getClass()))
             return;
 
-        if ((current instanceof Iterable<?> && !settings.detailledIterableCheck)
-                || (current instanceof Map<?, ?> && !settings.detailledMapCheck)
+        if ((current instanceof Iterable<?> && !settings.isDetailledIterableCheck())
+                || (current instanceof Map<?, ?> && !settings.isDetailledMapCheck())
             || current.getClass().isArray()) {
             iterativeScenario(targetType, rootContext, settings, found, visited, depth, current, parent, holdingField);
         } else {
@@ -107,9 +107,13 @@ public class BeanIntrospector {
                     value = currentPrivilegedLookup.unreflectVarHandle(field).get(current);
                 } catch (IllegalAccessException e) {
                     // Shouldn't happen as we are supposed to have a private level of access into the class...
-                    throw new TracedAccessException("Couldn't read the value of the field: " + field
-                            + ". This should be impossible. " +
-                            "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues describing how this happened.", e);
+                    if (!settings.isIgnoreIllegalAccessError()) {
+                        throw new TracedAccessException("Couldn't read the value of the field: " + field
+                                + ". This should be impossible. " +
+                                "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues" +
+                                " describing how this happened.", e);
+                    }
+                    continue;
                 }
                 if (value != null) {
                     try {

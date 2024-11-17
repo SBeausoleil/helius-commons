@@ -1,7 +1,5 @@
 package systems.helius.commons.reflection;
 
-import java.util.List;
-
 public final class IntrospectionSettingsBuilder {
     private IntrospectionSettings introspectionSettings;
 
@@ -9,8 +7,21 @@ public final class IntrospectionSettingsBuilder {
         introspectionSettings = new IntrospectionSettings();
     }
 
+    public IntrospectionSettingsBuilder(IntrospectionSettings other) {
+        this.introspectionSettings = other;
+    }
+
+    public static IntrospectionSettingsBuilder anIntrospectionSettings() {
+        return new IntrospectionSettingsBuilder();
+    }
+
     public IntrospectionSettingsBuilder withSafeAccessCheck(boolean safeAccessCheck) {
         introspectionSettings.setSafeAccessCheck(safeAccessCheck);
+        return this;
+    }
+
+    public IntrospectionSettingsBuilder withIgnoreIllegalAccessError(boolean ignoreIllegalAccessError) {
+        introspectionSettings.setIgnoreIllegalAccessError(ignoreIllegalAccessError);
         return this;
     }
 
@@ -31,11 +42,6 @@ public final class IntrospectionSettingsBuilder {
 
     public IntrospectionSettingsBuilder withMaxDepth(int maxDepth) {
         introspectionSettings.setMaxDepth(maxDepth);
-        return this;
-    }
-
-    public IntrospectionSettingsBuilder withSpecialValueHandlers(List<ValueHandler> specialValueHandlers) {
-        introspectionSettings.setSpecialValueHandlers(specialValueHandlers);
         return this;
     }
 

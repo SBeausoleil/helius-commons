@@ -1,20 +1,23 @@
 package systems.helius.commons.reflection;
 
-import systems.helius.commons.reflection.handlers.IterableLazyHandler;
-
-import java.util.ArrayList;
-import java.util.List;
-
-// TODO create a settings overrides builder for the bean introspection
 public class IntrospectionSettings {
     /**
      * If true (default), only fields and methods that may be accessed according to the rules will be made accessible.
-     * If false, introspectors will throw an InaccessibleObjectException if faced with something it is not allowed to access.
+     * If false, introspectors will throw an IllegalAccessException if faced with something it is not allowed to access.
      * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/IllegalAccessException.html">Java 17 API: IllegalAccessException</a>
-     * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/InaccessibleObjectException.html">Java 17 API: InaccessibleObjectException</a>
-     *
      */
     protected boolean safeAccessCheck = true;
+    /**
+     * Controls what happens when an IllegalAccessException occurs whilst reading a field's value using a privileged lookup.
+     * That is a very unlikely scenario that should only occur if the binary definition of the class that contains the
+     * field being read changes between the lookup being acquired and the attempt to read.
+     * If true, the exception will be ignored.
+     * If false (default), the introspector will fail-fast and an IllegalAccessError will be thrown.
+     * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/IllegalAccessException.html">Java 17 API: IllegalAccessException</a>
+     * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.html#privateLookupIn(java.lang.Class,java.lang.invoke.MethodHandles.Lookup)">Java 17 API: MethodHandles.privateLookupIn(Class, Lookup)</a>
+     * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html#unreflectVarHandle(java.lang.reflect.Field)">Java 17 API: Lookup.unreflectVarHandle</a>
+     */
+    protected boolean ignoreIllegalAccessError = false;
     /**
      * If true, Iterable classes will have their internals inspected as if they were a regular class.
      * If false (default), Iterable classes will only have their iterable elements inspected.
@@ -35,19 +38,20 @@ public class IntrospectionSettings {
 
     protected int maxDepth = Integer.MAX_VALUE;
 
-    @Deprecated
-    protected List<ValueHandler> specialValueHandlers = new ArrayList<>(
-            List.of(
-                    new IterableLazyHandler()
-            )
-    );
-
     public boolean isSafeAccessCheck() {
         return safeAccessCheck;
     }
 
     public void setSafeAccessCheck(boolean safeAccessCheck) {
         this.safeAccessCheck = safeAccessCheck;
+    }
+
+    public boolean isIgnoreIllegalAccessError() {
+        return ignoreIllegalAccessError;
+    }
+
+    public void setIgnoreIllegalAccessError(boolean ignoreIllegalAccessError) {
+        this.ignoreIllegalAccessError = ignoreIllegalAccessError;
     }
 
     public boolean isDetailledIterableCheck() {
@@ -80,13 +84,5 @@ public class IntrospectionSettings {
 
     public void setMaxDepth(int maxDepth) {
         this.maxDepth = maxDepth;
-    }
-
-    public List<ValueHandler> getSpecialValueHandlers() {
-        return specialValueHandlers;
-    }
-
-    public void setSpecialValueHandlers(List<ValueHandler> specialValueHandlers) {
-        this.specialValueHandlers = specialValueHandlers;
     }
 }
