@@ -1,22 +1,62 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
 plugins {
-    id 'java'
+    id "java-library"
+    id "com.vanniktech.maven.publish" version "0.30.0"
+    id "signing"
 }
 
-group = 'systems.helius'
-version = '1.0-SNAPSHOT'
+group = "systems.helius"
+version = "0.1.1"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: '3.0.0'
+    implementation group: "jakarta.annotation", name: "jakarta.annotation-api", version: "3.0.0"
 
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation group: 'io.github.sbeausoleil', name: 'factorium', version: '2.1.0'
+    testImplementation platform("org.junit:junit-bom:5.10.0")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testImplementation group: "io.github.sbeausoleil", name: "factorium", version: "2.1.0"
 }
 
 test {
     useJUnitPlatform()
+}
+
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+    coordinates(group, rootProject.name, version)
+
+    pom {
+        name = "Helius Commons"
+        description = "A common utilities library with a focus on reflective programming."
+        url = "https://github.com/SBeausoleil/helius-commons"
+        licenses {
+            license {
+                name = "MIT Licence"
+                url = "https://github.com/SBeausoleil/helius-commons/blob/master/LICENSE.md"
+            }
+        }
+        developers {
+            developer {
+                id = "samuelb"
+                name = "Samuel Beausoleil"
+                email = "sbeausoleil_dev@hotmail.com"
+                organization = "Independent"
+            }
+        }
+        scm {
+            connection = "scm:git:git://github.com/SBeausoleil/helius-commons.git"
+            developerConnection = "scm:git:ssh://github.com:SBeausoleil/helius-commons.git"
+            url = "https://github.com/SBeausoleil/helius-commons"
+        }
+    }
+
+    signAllPublications()
+    signing {
+        useGpgCmd()
+    }
 }

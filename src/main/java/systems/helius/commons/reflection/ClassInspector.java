@@ -1,12 +1,13 @@
 package systems.helius.commons.reflection;
 
 import jakarta.annotation.Nullable;
+import systems.helius.commons.annotations.Unstable;
 import systems.helius.commons.collections.BiDirectionalMap;
 
 import java.lang.reflect.Field;
 import java.util.*;
 
-public final class ClassIntrospector {
+public final class ClassInspector {
     private static final WeakHashMap<Class<?>, LinkedHashMap<Class<?>, Field[]>> hierarchyCache = new WeakHashMap<>();
     private static final WeakHashMap<Class<?>, List<Field>> flatCache = new WeakHashMap<>();
 
@@ -28,7 +29,8 @@ public final class ClassIntrospector {
         PRIMITIVE_WRAPPERS.put(Character.class, char.class);
     }
 
-    public ClassIntrospector() {}
+    @Unstable
+    ClassInspector() {}
 
     /**
      * Get all the fields that are present in members of a given class.
@@ -47,7 +49,9 @@ public final class ClassIntrospector {
             fields = new LinkedHashMap<>();
             fields.put(clazz, clazz.getDeclaredFields());
             Class<?> superClass = clazz.getSuperclass();
-            if (superClass != null && !superClass.equals(Object.class)) {
+            if (superClass != null
+                    && !superClass.equals(Object.class)
+                    && !superClass.equals(Enum.class)) {
                 fields.putAll(getAllFieldsHierarchical(superClass));
             }
             hierarchyCache.put(clazz, fields);
@@ -83,20 +87,18 @@ public final class ClassIntrospector {
      *
      * @param targetType the sought type
      * @param value the object being checked
-     * @param holdingField Because of implicit casting rules in the Java Language, primitives are implicitly converted
-     *                     to their wrapper type when passed to a method that takes an Object. Passing the field
-     *                     that held the value allows us to deduce the correct true type of the value.
-     * @return true if the real type of the value is the target type
+     * @param originalType Because of implicit casting rules in the Java Language, primitives are implicitly converted
+     *                     to their wrapper type when passed to a method that takes an Object. Passing the original
+     *                     type of the field that held the value allows us to deduce the correct true type of the value.
+     * @return true if the real type of the value is the target type or is a child of it.
      */
-    public static boolean evaluateTypingMatch(Class<?> targetType, Object value, @Nullable Field holdingField) {
-        if (holdingField != null) {
-            if (holdingField.getType() == Void.class)
+    public static boolean evaluateTypingMatch(Class<?> targetType, Object value, @Nullable Class<?> originalType) {
+        if (originalType != null) {
+            if (originalType == Void.class)
                 return true;
 
-            if (holdingField.getType().isPrimitive()) {
+            if (originalType.isPrimitive()) {
                 return targetType == PRIMITIVE_WRAPPERS.get(value.getClass());
-            } else if (Iterable.class.isAssignableFrom(holdingField.getType())) {
-                // TODO handle RE: doesn't seem to ever be needed
             }
         }
         return targetType.isAssignableFrom(value.getClass());

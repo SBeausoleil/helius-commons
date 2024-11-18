@@ -1,18 +1,16 @@
 package systems.helius.commons.reflection;
 
 import com.sb.factorium.FactoryProvider;
+import com.sb.factorium.RandomUtil;
 import com.sb.factorium.RecordingFactory;
 import com.sb.factorium.RecordingFactoryMaker;
 import org.junit.jupiter.api.Test;
 import systems.helius.commons.types.*;
 
 import java.lang.invoke.MethodHandles;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -57,6 +55,7 @@ class BeanIntrospectorTest {
     @Test
     void WhenSeekIterable_GivenClassWithIterables_ThenFindIterables() throws IllegalAccessException {
         FooCollection fooCollection = fooCollectionGenerator.generate();
+        //noinspection rawtypes impossible to cast the generic of Iterable
         Set<Iterable> found = new BeanIntrospector().seek(Iterable.class, fooCollection, MethodHandles.lookup());
         assertEquals(2, found.size());
     }
@@ -190,5 +189,13 @@ class BeanIntrospectorTest {
                 ComplexStructure.MiddleStrata.IntHolder.class, structure, MethodHandles.lookup());
         assertEquals(1, found.size());
         assertTrue(found.contains(firstId));
+    }
+
+    @Test
+    void WhenSeekInt_GivenEnum_ThenFindIdField() throws IllegalAccessException {
+        BarEnum bar = RandomUtil.randomEnum(BarEnum.class);
+        Set<Integer> found = new BeanIntrospector().seek(int.class, bar, MethodHandles.lookup());
+        assertEquals(1, found.size());
+        assertEquals(bar.getId(), found.iterator().next());
     }
 }

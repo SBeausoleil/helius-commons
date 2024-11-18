@@ -5,13 +5,15 @@ import jakarta.annotation.Nullable;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static java.lang.invoke.MethodHandles.Lookup;
 
 public class BeanIntrospector {
     protected IntrospectionSettings defaults;
-    protected Map<Class<?>, MethodHandles.Lookup> privilegedLookups = new HashMap<>();
+    protected Map<Class<?>, MethodHandles.Lookup> privilegedLookups = new ConcurrentHashMap<>();
 
     // IMPROVEMENT a map of fields and varhandles that are already known to resolve them?
 
@@ -44,12 +46,11 @@ public class BeanIntrospector {
     /**
      * Seek within the root and all children for instances of a given type.
      * Warning! The returned set uses object identity (==), not equals() as is usually the case with sets.
-     * @param targetType
-     * @param root
-     * @param context
-     * @return
-     * @param <T>
-     * @throws IllegalAccessException
+     * @param targetType instances to find must be of that type or a covalent type.
+     * @param root seek into
+     * @param context the context of the caller. Should always be MethodHandles.lookup();
+     * @return every instance found of the given type
+     * @throws IllegalAccessException if any access right issue is found.
      * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/IdentityHashMap.html">Java 17 API: IdentitHashMap</a>
      */
     public <T> Set<T> seek(Class<T> targetType, Object root, Lookup context/*, IntrospectionSettings introspectionOverrides TODO*/) throws IllegalAccessException {
@@ -77,14 +78,14 @@ public class BeanIntrospector {
         depth++;
 
 
-        if (ClassIntrospector.evaluateTypingMatch(targetType, current, holdingField)) {
+        if (ClassInspector.evaluateTypingMatch(targetType, current, (holdingField != null ? holdingField.getType() : null))) {
             //noinspection unchecked covered by the static isAssignableFrom
             found.add((T) current);
             if (!settings.isEnterTargetType())
                 return;
         }
 
-        if (current.getClass().isPrimitive() || ClassIntrospector.isPrimitiveWrapper(current.getClass()))
+        if (current.getClass().isPrimitive() || ClassInspector.isPrimitiveWrapper(current.getClass()))
             return;
 
         if ((current instanceof Iterable<?> && !settings.isDetailledIterableCheck())
@@ -101,7 +102,7 @@ public class BeanIntrospector {
                                               Lookup rootContext, IntrospectionSettings settings,
                                               Set<T> found, Set<Object> visited, int depth,
                                               Lookup currentPrivilegedLookup, Field holdingField) throws TracedAccessException {
-        LinkedHashMap<Class<?>, Field[]> fields = ClassIntrospector.getAllFieldsHierarchical(current.getClass());
+        LinkedHashMap<Class<?>, Field[]> fields = ClassInspector.getAllFieldsHierarchical(current.getClass());
         if (fields.isEmpty()) return;
 
         for (Map.Entry<Class<?>, Field[]> entry : fields.entrySet()) {
@@ -114,6 +115,9 @@ public class BeanIntrospector {
                 }
             }
             for (Field field : entry.getValue()) {
+                if (Modifier.isStatic(field.getModifiers()))
+                    continue;
+
                 Object value;
                 try {
                     value = currentPrivilegedLookup.unreflectVarHandle(field).get(current);

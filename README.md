@@ -1,7 +1,33 @@
 # Common utilities library
+[Published on Maven Central:](https://central.sonatype.com/artifact/systems.helius/helius-commons)
+
+```
+implementation group: 'systems.helius', name: 'helius-commons', version: '0.1'
+```
+
+
 Minimum java version: 17
 ## Introspection
-TODO...
+To use the introspection ability of this library, simply create an instance of BeanIntrospector.
+You then call the `seek(Class, Object, MethodHandles.Lookup` method on it. 
+
+Example:
+```java
+    // Setup
+    var firstId = new IntHolder(1);
+    var secondId =  new IntHolder(2);
+    var structure = new ComplexStructure(new IntHolder(1), new IntHolder(2));
+
+    // Usage
+    Set<IntHolder> found = new BeanIntrospector().seek(IntHolder.class, structure, MethodHandles.lookup());
+    
+    // Validation
+    assertEquals(2, found.size());
+    assertTrue(found.contains(firstId));
+    assertTrue(found.contains(secondId));
+```
+For more examples, look at [the tests](https://github.com/SBeausoleil/helius-commons/blob/master/src/test/java/systems/helius/commons/reflection/BeanIntrospectorTest.java).
+You may reuse the same BeanIntrospector across different calls. 
 
 ### The Lookup object
 From: [Java 17 API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html)
