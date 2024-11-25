@@ -12,4 +12,12 @@ public class Foo {
     public int getA() {
         return a;
     }
+
+    @Override
+    public String toString() {
+        return "Foo{" +
+                "a=" + a +
+                ", b='" + b + '\'' +
+                '}';
+    }
 }

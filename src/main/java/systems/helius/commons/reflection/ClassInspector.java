@@ -4,12 +4,17 @@ import jakarta.annotation.Nullable;
 import systems.helius.commons.annotations.Unstable;
 import systems.helius.commons.collections.BiDirectionalMap;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class ClassInspector {
     private static final WeakHashMap<Class<?>, LinkedHashMap<Class<?>, Field[]>> hierarchyCache = new WeakHashMap<>();
     private static final WeakHashMap<Class<?>, List<Field>> flatCache = new WeakHashMap<>();
+
+    private final Map<Class<?>, MethodHandles.Lookup> privilegedLookups = new ConcurrentHashMap<>();
 
     /**
      * Wrapper types of Java lang primitives.
@@ -83,6 +88,26 @@ public final class ClassInspector {
         return result;
     }
 
+    public static Map<Field, VarHandle> getAllFieldsHandles(Class<?> clazz, MethodHandles.Lookup context) throws IllegalAccessException {
+        Map<Field, VarHandle> handles = new LinkedHashMap<>();
+        var inspector = new ClassInspector();
+        MethodHandles.Lookup privilegedLookup = context;
+        for (Map.Entry<Class<?>, Field[]> fieldsByClass :  getAllFieldsHierarchical(clazz).entrySet()) {
+            if (context.lookupClass() != fieldsByClass.getKey()) {
+                // This grants access to the private fields within superclasses
+                try {
+                    privilegedLookup = inspector.getPrivilegedLookup(fieldsByClass.getKey(), privilegedLookup, context, true);
+                } catch (TracedAccessException e) {
+                    throw new IllegalAccessException("Couldn't get private access to the class: " + fieldsByClass.getKey().getCanonicalName() + ". " + e.getMessage());
+                }
+            }
+            for (Field field : fieldsByClass.getValue()) {
+                handles.put(field, privilegedLookup.unreflectVarHandle(field));
+            }
+        }
+        return handles;
+    }
+
     /**
      *
      * @param targetType the sought type
@@ -106,5 +131,40 @@ public final class ClassInspector {
 
     public static boolean isPrimitiveWrapper(Class<?> clazz) {
         return PRIMITIVE_WRAPPERS.containsKey(clazz);
+    }
+
+    /**
+     * Attempts to get a privileged (private-level access) lookup on a target class.
+     *
+     * @param target        the class on which a privileged lookup is desired.
+     * @param rootContext   the original context of the request. Will be used as a backup if the parent may not grant privileged-access.
+     * @param parent        the lookup on the class that owns the field where the target is the type.
+     * @param forSuperclass indicates that the lookup is being made for the superclass of the parent.
+     * @return a privileged lookup.
+     */
+    MethodHandles.Lookup getPrivilegedLookup(Class<?> target, MethodHandles.Lookup rootContext, MethodHandles.Lookup parent, boolean forSuperclass) throws TracedAccessException {
+        MethodHandles.Lookup acquiredAccess = privilegedLookups.get(target);
+        if (acquiredAccess != null)
+            return acquiredAccess;
+
+        try { // Check if the direct parent has access
+            acquiredAccess = MethodHandles.privateLookupIn(target, parent);
+        } catch (IllegalAccessException | SecurityException parentException) {
+            try { // Fallback on the root context: perhaps the parent is part of a library who is not allowed such privileges
+                acquiredAccess = MethodHandles.privateLookupIn(target, rootContext);
+            } catch (IllegalAccessException | SecurityException rootContextException) {
+                try { // Last resort: maybe this library is afforded the privilege by the type's module.
+                    acquiredAccess = MethodHandles.privateLookupIn(target, MethodHandles.lookup());
+                } catch (IllegalAccessException | SecurityException libraryLookupException) {
+                    throw new TracedAccessException("Couldn't get privileged lookup access into: " + target.getCanonicalName()
+                            + (forSuperclass ? "\n Accessing superclass of: " + parent.lookupClass()
+                            : ".\n Parent class: " + parentException.getMessage())
+                            + ",\n root context: " + rootContextException.getMessage()
+                            + ",\n library context: " + libraryLookupException.getMessage());
+                }
+            }
+        }
+        privilegedLookups.put(target, acquiredAccess);
+        return acquiredAccess;
     }
 }

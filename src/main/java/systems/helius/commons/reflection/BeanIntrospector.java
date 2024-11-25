@@ -13,7 +13,7 @@ import static java.lang.invoke.MethodHandles.Lookup;
 
 public class BeanIntrospector {
     protected IntrospectionSettings defaults;
-    protected Map<Class<?>, MethodHandles.Lookup> privilegedLookups = new ConcurrentHashMap<>();
+    protected ClassInspector classInspector = new ClassInspector();
 
     // IMPROVEMENT a map of fields and varhandles that are already known to resolve them?
 
@@ -93,7 +93,7 @@ public class BeanIntrospector {
             || current.getClass().isArray()) {
             iterativeScenario(targetType, rootContext, settings, found, visited, depth, current, parent, holdingField);
         } else {
-            Lookup lookup = getPrivilegedLookup(current.getClass(), rootContext, parent, false);
+            Lookup lookup = classInspector.getPrivilegedLookup(current.getClass(), rootContext, parent, false);
             singularObjectScenario(targetType, current, rootContext, settings, found, visited, depth, lookup, holdingField);
         }
     }
@@ -109,7 +109,7 @@ public class BeanIntrospector {
             if (currentPrivilegedLookup.lookupClass() != entry.getKey()) {
                 // This grants access to the private fields within superclasses
                 try {
-                    currentPrivilegedLookup = getPrivilegedLookup(entry.getKey(), currentPrivilegedLookup, rootContext, true);
+                    currentPrivilegedLookup = classInspector.getPrivilegedLookup(entry.getKey(), currentPrivilegedLookup, rootContext, true);
                 } catch (TracedAccessException e) {
                     e.addStep(holdingField);
                 }
@@ -164,42 +164,4 @@ public class BeanIntrospector {
             depthFirstSearch(targetType, it.next(), holdingField, rootContext, lookup, settings, found, visited, depth + 1);
         }
     }
-
-    /**
-     * Attempts to get a privileged (private-level access) lookup on a target class.
-     *
-     * @param target        the class on which a privileged lookup is desired.
-     * @param rootContext   the original context of the request. Will be used as a backup if the parent may not grant privileged-access.
-     * @param parent        the lookup on the class that owns the field where the target is the type.
-     * @param forSuperclass indicates that the lookup is being made for the superclass of the parent.
-     * @return a privileged lookup.
-     */
-    protected MethodHandles.Lookup getPrivilegedLookup(Class<?> target, MethodHandles.Lookup rootContext, MethodHandles.Lookup parent, boolean forSuperclass) throws TracedAccessException {
-        MethodHandles.Lookup acquiredAccess = privilegedLookups.get(target);
-        if (acquiredAccess != null)
-            return acquiredAccess;
-
-        try { // Check if the direct parent has access
-            acquiredAccess = MethodHandles.privateLookupIn(target, parent);
-        } catch (IllegalAccessException | SecurityException parentException) {
-            try { // Fallback on the root context: perhaps the parent is part of a library who is not allowed such privileges
-                acquiredAccess = MethodHandles.privateLookupIn(target, rootContext);
-            } catch (IllegalAccessException | SecurityException rootContextException) {
-                try { // Last resort: maybe this library is afforded the privilege by the type's module.
-                    acquiredAccess = MethodHandles.privateLookupIn(target, MethodHandles.lookup());
-                } catch (IllegalAccessException | SecurityException libraryLookupException) {
-                    // IMPROVEMENT In case of final failure, attempt to find an accessible getter method
-                    throw new TracedAccessException("Couldn't get privileged lookup access into: " + target.getCanonicalName()
-                            + (forSuperclass ? "\n Accessing superclass of: " + parent.lookupClass()
-                                            : ".\n Parent class: " + parentException.getMessage())
-                            + ",\n root context: " + rootContextException.getMessage()
-                            + ",\n library context: " + libraryLookupException.getMessage());
-                }
-            }
-        }
-        this.privilegedLookups.put(target, acquiredAccess);
-        return acquiredAccess;
-    }
-
-
 }
