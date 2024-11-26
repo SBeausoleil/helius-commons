@@ -1,5 +1,6 @@
 package systems.helius.commons.reflection;
 
+import com.github.javafaker.Faker;
 import com.sb.factorium.FactoryProvider;
 import com.sb.factorium.RandomUtil;
 import com.sb.factorium.RecordingFactory;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import systems.helius.commons.types.*;
 
 import java.lang.invoke.MethodHandles;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -15,6 +17,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BeanIntrospectorTest {
+    private static Faker faker = new Faker();
+
     private static FooGenerator fooGenerator = new FooGenerator();
     private static FooCollectionGenerator fooCollectionGenerator = new FooCollectionGenerator(fooGenerator);
 
@@ -197,5 +201,35 @@ class BeanIntrospectorTest {
         Set<Integer> found = new BeanIntrospector().seek(int.class, bar, MethodHandles.lookup());
         assertEquals(1, found.size());
         assertEquals(bar.getId(), found.iterator().next());
+    }
+
+    @Test
+    void WhenSeekMapContent_GivenMap_ThenCanReadKey() throws IllegalAccessException {
+        List<String> toFind = faker.lorem().words(2);
+        var map = new HashMap<Object, Object>();
+        // Put noise in the map
+        map.put(Math.random(), Math.random());
+        map.put(Math.random(), Math.random());
+        map.put(Math.random(), Math.random());
+        toFind.forEach(s -> map.put(s, Math.random()));
+
+        Set<String> found = new BeanIntrospector().seek(String.class, map, MethodHandles.lookup());
+        assertEquals(toFind.size(), found.size());
+        assertTrue(found.containsAll(toFind));
+    }
+
+    @Test
+    void WhenSeekMapContent_GivenMap_ThenCanReadValues() throws IllegalAccessException {
+        List<String> toFind = faker.lorem().words(2);
+        var map = new HashMap<Object, Object>();
+        // Put noise in the map
+        map.put(Math.random(), Math.random());
+        map.put(Math.random(), Math.random());
+        map.put(Math.random(), Math.random());
+        toFind.forEach(s -> map.put(Math.random() * 100, s));
+
+        Set<String> found = new BeanIntrospector().seek(String.class, map, MethodHandles.lookup());
+        assertEquals(toFind.size(), found.size());
+        assertTrue(found.containsAll(toFind));
     }
 }

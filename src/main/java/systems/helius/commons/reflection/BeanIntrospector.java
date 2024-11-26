@@ -93,7 +93,7 @@ public class BeanIntrospector {
         } else {
             try {
                 Lookup lookup = classInspector.getPrivilegedLookup(current.getClass(), rootContext, parent, false);
-                singularObjectScenario(targetType, current, rootContext, settings, found, visited, depth, lookup, holdingField);
+                detailedInspectionScenario(targetType, current, rootContext, settings, found, visited, depth, lookup, holdingField);
             } catch (TracedAccessException e) {
                 if (!settings.useSafeAccessCheck()) {
                     e.addStep(holdingField);
@@ -103,10 +103,10 @@ public class BeanIntrospector {
         }
     }
 
-    protected <T> void singularObjectScenario(Class<T> targetType, Object current,
-                                              Lookup rootContext, IntrospectionSettings settings,
-                                              Set<T> found, Set<Object> visited, int depth,
-                                              Lookup currentPrivilegedLookup, Field holdingField) throws TracedAccessException {
+    protected <T> void detailedInspectionScenario(Class<T> targetType, Object current,
+                                                  Lookup rootContext, IntrospectionSettings settings,
+                                                  Set<T> found, Set<Object> visited, int depth,
+                                                  Lookup currentPrivilegedLookup, Field holdingField) throws TracedAccessException {
         LinkedHashMap<Class<?>, Field[]> fields = ClassInspector.getAllFieldsHierarchical(current.getClass());
         if (fields.isEmpty()) return;
 
@@ -168,7 +168,7 @@ public class BeanIntrospector {
         } else if (value instanceof Iterable<?> i) {
             it = i.iterator();
         } else {
-            it = ((Map<?, ?>) value).entrySet().iterator();
+            it =
         }
         while (it.hasNext()) {
             depthFirstSearch(targetType, it.next(), holdingField, rootContext, lookup, settings, found, visited, depth + 1);
