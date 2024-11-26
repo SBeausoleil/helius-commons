@@ -2,12 +2,10 @@ package systems.helius.commons.reflection;
 
 import jakarta.annotation.Nullable;
 
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static java.lang.invoke.MethodHandles.Lookup;
 
@@ -85,7 +83,7 @@ public class BeanIntrospector {
                 return;
         }
 
-        if (current.getClass().isPrimitive() || ClassInspector.isPrimitiveWrapper(current.getClass()))
+        if (ClassInspector.isPrimitiveWrapper(current.getClass())) // Also catches primitives due to the autoboxing
             return;
 
         if ((current instanceof Iterable<?> && !settings.isDetailledIterableCheck())
@@ -93,8 +91,15 @@ public class BeanIntrospector {
             || current.getClass().isArray()) {
             iterativeScenario(targetType, rootContext, settings, found, visited, depth, current, parent, holdingField);
         } else {
-            Lookup lookup = classInspector.getPrivilegedLookup(current.getClass(), rootContext, parent, false);
-            singularObjectScenario(targetType, current, rootContext, settings, found, visited, depth, lookup, holdingField);
+            try {
+                Lookup lookup = classInspector.getPrivilegedLookup(current.getClass(), rootContext, parent, false);
+                singularObjectScenario(targetType, current, rootContext, settings, found, visited, depth, lookup, holdingField);
+            } catch (TracedAccessException e) {
+                if (!settings.useSafeAccessCheck()) {
+                    e.addStep(holdingField);
+                    throw e;
+                }
+            }
         }
     }
 
@@ -111,7 +116,11 @@ public class BeanIntrospector {
                 try {
                     currentPrivilegedLookup = classInspector.getPrivilegedLookup(entry.getKey(), currentPrivilegedLookup, rootContext, true);
                 } catch (TracedAccessException e) {
-                    e.addStep(holdingField);
+                    if (!settings.useSafeAccessCheck()) {
+                        e.addStep(holdingField);
+                        throw e;
+                    }
+                    continue;
                 }
             }
             for (Field field : entry.getValue()) {
@@ -127,7 +136,7 @@ public class BeanIntrospector {
                         throw new TracedAccessException("Couldn't read the value of the field: " + field
                                 + ". This should be impossible. " +
                                 "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues" +
-                                " describing how this happened.", e);
+                                " describing how this happened.", true, e);
                     }
                     continue;
                 }
@@ -136,6 +145,7 @@ public class BeanIntrospector {
                         depthFirstSearch(targetType, value, field, rootContext, currentPrivilegedLookup, settings, found, visited, depth + 1);
                     } catch (TracedAccessException e) {
                         e.addStep(field);
+                        throw e;
                     }
                 }
             }

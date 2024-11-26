@@ -8,13 +8,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class ClassInspector {
     private static final WeakHashMap<Class<?>, LinkedHashMap<Class<?>, Field[]>> hierarchyCache = new WeakHashMap<>();
     private static final WeakHashMap<Class<?>, List<Field>> flatCache = new WeakHashMap<>();
-
-    private final Map<Class<?>, MethodHandles.Lookup> privilegedLookups = new ConcurrentHashMap<>();
 
     /**
      * Wrapper types of Java lang primitives.
@@ -143,10 +140,7 @@ public final class ClassInspector {
      * @return a privileged lookup.
      */
     MethodHandles.Lookup getPrivilegedLookup(Class<?> target, MethodHandles.Lookup rootContext, MethodHandles.Lookup parent, boolean forSuperclass) throws TracedAccessException {
-        MethodHandles.Lookup acquiredAccess = privilegedLookups.get(target);
-        if (acquiredAccess != null)
-            return acquiredAccess;
-
+        MethodHandles.Lookup acquiredAccess;
         try { // Check if the direct parent has access
             acquiredAccess = MethodHandles.privateLookupIn(target, parent);
         } catch (IllegalAccessException | SecurityException parentException) {
@@ -160,11 +154,11 @@ public final class ClassInspector {
                             + (forSuperclass ? "\n Accessing superclass of: " + parent.lookupClass()
                             : ".\n Parent class: " + parentException.getMessage())
                             + ",\n root context: " + rootContextException.getMessage()
-                            + ",\n library context: " + libraryLookupException.getMessage());
+                            + ",\n library context: " + libraryLookupException.getMessage(),
+                            false);
                 }
             }
         }
-        privilegedLookups.put(target, acquiredAccess);
         return acquiredAccess;
     }
 }

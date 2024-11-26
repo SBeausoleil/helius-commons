@@ -15,14 +15,19 @@ public class TracedAccessException extends Exception {
     @Nullable
     private Object root;
     private Stack<Field> trace = new Stack<>();
-    private boolean assertionError;
+    /**
+     * Indicates that the exception was thrown while attempting to read a field with a privileged lookup.
+     */
+    private final boolean duringFieldRead;
 
-    public TracedAccessException(String message) {
+    public TracedAccessException(String message, boolean duringFieldRead) {
         super(message);
+        this.duringFieldRead = duringFieldRead;
     }
 
-    public TracedAccessException(String message, Throwable cause) {
+    public TracedAccessException(String message, boolean duringFieldRead, Throwable cause) {
         super(message, cause);
+        this.duringFieldRead = duringFieldRead;
     }
 
     public void addStep(@Nullable Field step) {
@@ -46,16 +51,12 @@ public class TracedAccessException extends Exception {
         return sb.toString();
     }
 
-    public boolean isAssertionError() {
-        return assertionError;
+    public boolean wasDuringFieldRead() {
+        return duringFieldRead;
     }
 
     public boolean isException() {
-        return !assertionError;
-    }
-
-    public void setAssertionError(boolean assertionError) {
-        this.assertionError = assertionError;
+        return !duringFieldRead;
     }
 
     @Nullable

@@ -38,7 +38,7 @@ public class IntrospectionSettings {
 
     protected int maxDepth = Integer.MAX_VALUE;
 
-    public boolean isSafeAccessCheck() {
+    public boolean useSafeAccessCheck() {
         return safeAccessCheck;
     }
 
