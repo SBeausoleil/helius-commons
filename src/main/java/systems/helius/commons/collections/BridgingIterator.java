@@ -1,6 +1,7 @@
 package systems.helius.commons.collections;
 
 import jakarta.annotation.Nullable;
+import systems.helius.commons.annotations.Unstable;
 
 import java.util.*;
 
@@ -82,8 +83,9 @@ public class BridgingIterator<T> implements Iterator<T> {
     /**
      * Return the source that is currently being read.
      * <p>
-     * WARNING: modifying the returned source incurs a risk of heap-pollution!
+     * WARNING: externally modifying the returned source incurs a risk of heap-pollution!
      */
+    @Unstable
     public Iterable<T> currentSource() {
         return sources[index > 0 ? (index - 1) : 0];
     }

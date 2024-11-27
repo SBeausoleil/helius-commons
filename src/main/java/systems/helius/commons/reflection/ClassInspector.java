@@ -10,9 +10,6 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 public final class ClassInspector {
-    private static final WeakHashMap<Class<?>, LinkedHashMap<Class<?>, Field[]>> hierarchyCache = new WeakHashMap<>();
-    private static final WeakHashMap<Class<?>, List<Field>> flatCache = new WeakHashMap<>();
-
     /**
      * Wrapper types of Java lang primitives.
      * Key: Wrapper class
@@ -46,17 +43,13 @@ public final class ClassInspector {
      * the class of each superclass of the target class.
      */
     public static LinkedHashMap<Class<?>, Field[]> getAllFieldsHierarchical(Class<?> clazz) {
-        LinkedHashMap<Class<?>, Field[]> fields = hierarchyCache.get(clazz);
-        if (fields == null) {
-            fields = new LinkedHashMap<>();
-            fields.put(clazz, clazz.getDeclaredFields());
-            Class<?> superClass = clazz.getSuperclass();
-            if (superClass != null
-                    && !superClass.equals(Object.class)
-                    && !superClass.equals(Enum.class)) {
-                fields.putAll(getAllFieldsHierarchical(superClass));
-            }
-            hierarchyCache.put(clazz, fields);
+        var fields = new LinkedHashMap<Class<?>, Field[]>();
+        fields.put(clazz, clazz.getDeclaredFields());
+        Class<?> superClass = clazz.getSuperclass();
+        if (superClass != null
+                && !superClass.equals(Object.class)
+                && !superClass.equals(Enum.class)) {
+            fields.putAll(getAllFieldsHierarchical(superClass));
         }
         return fields;
     }
@@ -69,20 +62,17 @@ public final class ClassInspector {
      * @return all the fields that members of clazz have.
      */
     public static List<Field> getAllFieldsFlat(Class<?> clazz) {
-        List<Field> result = flatCache.get(clazz);
-        if (result == null) {
-            Map<Class<?>, Field[]> fields = getAllFieldsHierarchical(clazz);
-            int reserve = fields.values().stream().mapToInt(field -> field.length).sum();
-            Field[] buffer = new Field[reserve];
-            int index = 0;
-            for (Field[] values : fields.values()) {
-                System.arraycopy(values, 0, buffer, index, values.length);
-                index += values.length;
-            }
-            result = Arrays.asList(buffer);
-            flatCache.put(clazz, result);
+        //List<Field> result = flatCache.get(clazz);
+        Map<Class<?>, Field[]> fields = getAllFieldsHierarchical(clazz);
+        int reserve = fields.values().stream().mapToInt(field -> field.length).sum();
+        Field[] buffer = new Field[reserve];
+        int index = 0;
+        for (Field[] values : fields.values()) {
+            System.arraycopy(values, 0, buffer, index, values.length);
+            index += values.length;
         }
-        return result;
+        //flatCache.put(clazz, result);
+        return Arrays.asList(buffer);
     }
 
     public static Map<Field, VarHandle> getAllFieldsHandles(Class<?> clazz, MethodHandles.Lookup context) throws IllegalAccessException {
@@ -139,7 +129,7 @@ public final class ClassInspector {
      * @param forSuperclass indicates that the lookup is being made for the superclass of the parent.
      * @return a privileged lookup.
      */
-    MethodHandles.Lookup getPrivilegedLookup(Class<?> target, MethodHandles.Lookup rootContext, MethodHandles.Lookup parent, boolean forSuperclass) throws TracedAccessException {
+    protected MethodHandles.Lookup getPrivilegedLookup(Class<?> target, MethodHandles.Lookup rootContext, MethodHandles.Lookup parent, boolean forSuperclass) throws TracedAccessException {
         MethodHandles.Lookup acquiredAccess;
         try { // Check if the direct parent has access
             acquiredAccess = MethodHandles.privateLookupIn(target, parent);

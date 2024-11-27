@@ -30,7 +30,7 @@
         </list>
       </option>
     </inspection_tool>
-    <inspection_tool class="unused" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="true" checkParameterExcludingHierarchy="false" isSelected="true">
+    <inspection_tool class="unused" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="true" checkParameterExcludingHierarchy="false">
       <option name="LOCAL_VARIABLE" value="true" />
       <option name="FIELD" value="true" />
       <option name="METHOD" value="true" />

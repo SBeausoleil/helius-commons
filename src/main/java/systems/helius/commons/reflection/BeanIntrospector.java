@@ -108,7 +108,9 @@ public class BeanIntrospector {
                                                   Lookup rootContext, IntrospectionSettings settings,
                                                   Set<T> found, Set<Object> visited, int depth,
                                                   Lookup currentPrivilegedLookup, Field holdingField) throws TracedAccessException {
-        LinkedHashMap<Class<?>, Field[]> fields = ClassInspector.getAllFieldsHierarchical(current.getClass());
+
+        // TODO replace this with a call to ClassInspector.getAllFieldsHandles
+        LinkedHashMap<Class<?>, Field[]> fields = (LinkedHashMap<Class<?>, Field[]>) ClassInspector.getAllFieldsHierarchical(current.getClass());
         if (fields.isEmpty()) return;
 
         for (Map.Entry<Class<?>, Field[]> entry : fields.entrySet()) {
