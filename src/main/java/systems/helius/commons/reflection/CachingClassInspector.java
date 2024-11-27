@@ -1,10 +1,13 @@
 package systems.helius.commons.reflection;
 
+import systems.helius.commons.annotations.Unstable;
+
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class CachingClassInspector {
+@Unstable
+public final class CachingClassInspector extends ClassInspector {
     private final Map<Class<?>, Map<Class<?>, List<Field>>> hierarchyCache = new ConcurrentHashMap<>();
     private final Map<Class<?>, List<Field>> flatCache = new ConcurrentHashMap<>();
 
@@ -19,13 +22,14 @@ public final class CachingClassInspector {
      * @return all the fields that members of clazz have. This is in the form of a map where the key
      * the class of each superclass of the target class. The map itself and its lists are unmodifiable.
      */
+    @Override
     public Map<Class<?>, List<Field>> getAllFieldsHierarchical(Class<?> clazz) {
         Map<Class<?>, List<Field>> result = hierarchyCache.get(clazz);
         if (result == null) {
-            LinkedHashMap<Class<?>, Field[]> raw = ClassInspector.getAllFieldsHierarchical(clazz);
+            Map<Class<?>, List<Field>> raw = super.getAllFieldsHierarchical(clazz);
             result = new LinkedHashMap<>();
-            for (Map.Entry<Class<?>, Field[]> entry : raw.entrySet()) {
-                result.put(entry.getKey(), List.of(entry.getValue()));
+            for (Map.Entry<Class<?>, List<Field>> entry : raw.entrySet()) {
+                result.put(entry.getKey(), List.copyOf(entry.getValue()));
             }
             hierarchyCache.put(clazz, Collections.unmodifiableMap(result));
         }
@@ -42,7 +46,7 @@ public final class CachingClassInspector {
     public List<Field> getAllFieldsFlat(Class<?> clazz) {
         List<Field> result = flatCache.get(clazz);
         if (result == null) {
-            result = List.copyOf(ClassInspector.getAllFieldsFlat(clazz));
+            result = List.copyOf(super.getAllFieldsFlat(clazz));
             flatCache.put(clazz, result);
         }
         return result;

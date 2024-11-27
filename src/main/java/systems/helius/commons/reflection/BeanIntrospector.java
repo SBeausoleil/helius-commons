@@ -11,17 +11,26 @@ import java.util.*;
 import static java.lang.invoke.MethodHandles.Lookup;
 
 public class BeanIntrospector {
-    protected IntrospectionSettings defaults;
-    protected ClassInspector classInspector = new ClassInspector();
+    protected final IntrospectionSettings defaults;
+    protected final ClassInspector classInspector;
 
     // IMPROVEMENT a map of fields and varhandles that are already known to resolve them?
 
     public BeanIntrospector() {
-        defaults = new IntrospectionSettings();
+        this(null, null);
     }
 
     public BeanIntrospector(IntrospectionSettings defaults) {
-        this.defaults = defaults;
+        this(defaults, null);
+    }
+
+    public BeanIntrospector(ClassInspector classInspector) {
+        this(null, classInspector);
+    }
+
+    public BeanIntrospector(@Nullable IntrospectionSettings defaults, @Nullable ClassInspector classInspector) {
+        this.defaults = Objects.requireNonNullElseGet(defaults, IntrospectionSettings::new);
+        this.classInspector = Objects.requireNonNullElseGet(classInspector, CachingClassInspector::new);
     }
 
     /*
@@ -110,10 +119,10 @@ public class BeanIntrospector {
                                                   Lookup currentPrivilegedLookup, Field holdingField) throws TracedAccessException {
 
         // TODO replace this with a call to ClassInspector.getAllFieldsHandles
-        LinkedHashMap<Class<?>, Field[]> fields = (LinkedHashMap<Class<?>, Field[]>) ClassInspector.getAllFieldsHierarchical(current.getClass());
+        Map<Class<?>, List<Field>> fields = classInspector.getAllFieldsHierarchical(current.getClass());
         if (fields.isEmpty()) return;
 
-        for (Map.Entry<Class<?>, Field[]> entry : fields.entrySet()) {
+        for (Map.Entry<Class<?>, List<Field>> entry : fields.entrySet()) {
             if (currentPrivilegedLookup.lookupClass() != entry.getKey()) {
                 // This grants access to the private fields within superclasses
                 try {

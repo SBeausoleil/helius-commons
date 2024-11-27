@@ -5,6 +5,7 @@ import org.openjdk.jmh.infra.Blackhole;
 
 import java.util.concurrent.TimeUnit;
 
+@BenchmarkMode(Mode.All)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Fork(value = 1)
 @Warmup(time = 5, iterations = 2)
@@ -12,22 +13,22 @@ import java.util.concurrent.TimeUnit;
 public class ClassInspectorBenchmark {
 
     @Benchmark
-    public void getAllFieldsHierarchical_noCache(ExecutionPlan plan, Blackhole bh) {
-        bh.consume(ClassInspector.getAllFieldsHierarchical(plan.classToInspect));
+    public void getAllFieldsHierarchical_noCache(Basic inspector, ExecutionPlan plan, Blackhole bh) {
+        bh.consume(inspector.inspector.getAllFieldsHierarchical(plan.classToInspect));
     }
 
     @Benchmark
-    public void getAllFieldsHierarchical_cached(Inspector inspector, ExecutionPlan plan, Blackhole bh) {
-        bh.consume(inspector.cachingClassInspector.getAllFieldsHierarchical(plan.classToInspect));
+    public void getAllFieldsHierarchical_cached(Caching inspector, ExecutionPlan plan, Blackhole bh) {
+        bh.consume(inspector.inspector.getAllFieldsHierarchical(plan.classToInspect));
     }
 
     @State(Scope.Benchmark)
     public static class ExecutionPlan {
         @Param(value = {
-                "systems.helius.commons.types.Foo",
+             //   "systems.helius.commons.types.Foo",
                 "systems.helius.commons.types.DataClass",
-                "systems.helius.commons.types.ChildClassA",
-                "systems.helius.commons.types.ChildClassB",
+              //  "systems.helius.commons.types.ChildClassA",
+             //   "systems.helius.commons.types.ChildClassB",
                 "systems.helius.commons.types.ComplexChild"
         })
         String className;
@@ -46,13 +47,24 @@ public class ClassInspectorBenchmark {
     }
 
     @State(Scope.Benchmark)
-    public static class Inspector {
-        CachingClassInspector cachingClassInspector;
+    public static class Caching {
+        CachingClassInspector inspector;
 
         @Setup(Level.Iteration)
-        public void setup() {
+        public void initialize() {
             System.out.println("Initializing CachingClassInspector");
-            cachingClassInspector = new CachingClassInspector();
+            inspector = new CachingClassInspector();
+        }
+    }
+
+    @State(Scope.Benchmark)
+    public static class Basic {
+        ClassInspector inspector;
+
+        @Setup(Level.Trial)
+        public void initializeNotCaching() {
+            System.out.println("Initializing ClassInspector");
+            inspector = new ClassInspector();
         }
     }
 }
