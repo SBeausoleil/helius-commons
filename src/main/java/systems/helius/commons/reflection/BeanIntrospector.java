@@ -1,6 +1,7 @@
 package systems.helius.commons.reflection;
 
 import jakarta.annotation.Nullable;
+import systems.helius.commons.collections.BridgingIterator;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -152,7 +153,15 @@ public class BeanIntrospector {
         }
     }
 
-    protected <T> void iterativeScenario(Class<T> targetType, Lookup rootContext, IntrospectionSettings settings, Set<T> found, Set<Object> visited, int depth, Object value, Lookup lookup, Field holdingField) throws TracedAccessException {
+
+    /*
+    Suppressing the warnings is required, as we are intentionally polluting the heap in the map scenario.
+    Our pollution here is safe, as the polluted memory of the raw BridgingIterator never leaves the context
+    of this method and we never do any operation within this method that operates on assumptions of the typing
+    of the iterator since itself announces itself as a wildcard iterator.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private <T> void iterativeScenario(Class<T> targetType, Lookup rootContext, IntrospectionSettings settings, Set<T> found, Set<Object> visited, int depth, Object value, Lookup lookup, Field holdingField) throws TracedAccessException {
         Iterator<?> it;
         if (value.getClass().isArray()) {
             if (value.getClass().getComponentType().isPrimitive()) {
@@ -167,8 +176,10 @@ public class BeanIntrospector {
             }
         } else if (value instanceof Iterable<?> i) {
             it = i.iterator();
+        } else if (value instanceof Map<?, ?> map) {
+            it = new BridgingIterator(map.keySet(), map.values());
         } else {
-            it =
+            throw new UnsupportedOperationException("Type " + value.getClass() + " is not supported by the iterable scenario.");
         }
         while (it.hasNext()) {
             depthFirstSearch(targetType, it.next(), holdingField, rootContext, lookup, settings, found, visited, depth + 1);
