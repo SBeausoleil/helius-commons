@@ -15,7 +15,7 @@ class ClassInspectorTest {
     @Test
     void getAllFieldsHandles() throws IllegalAccessException, NoSuchFieldException {
         Foo foo = new Foo(5, "Hello");
-        Map<Field, VarHandle> handles = ClassInspector.getAllFieldsHandles(foo.getClass(), MethodHandles.lookup());
+        Map<Field, VarHandle> handles = new ClassInspector().getAllFieldsHandles(foo.getClass(), MethodHandles.lookup());
         assertEquals(Foo.class.getDeclaredFields().length, handles.size());
 
         final int A_NEW_VALUE = 1;

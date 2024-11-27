@@ -1,5 +1,5 @@
 package systems.helius.commons.types;
 
-class ChildClassB extends Superclass {
+public class ChildClassB extends Superclass {
     private int[] scores;
 }

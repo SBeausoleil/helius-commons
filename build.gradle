@@ -4,10 +4,12 @@ plugins {
     id "java-library"
     id "com.vanniktech.maven.publish" version "0.30.0"
     id "signing"
+    id "me.champeau.jmh" version "0.7.2"
+    id "java-test-fixtures"
 }
 
 group = "systems.helius"
-version = "0.2.0"
+version = "0.3.0"
 
 repositories {
     mavenCentral()
@@ -18,7 +20,14 @@ dependencies {
 
     testImplementation platform("org.junit:junit-bom:5.10.0")
     testImplementation "org.junit.jupiter:junit-jupiter"
-    testImplementation group: "io.github.sbeausoleil", name: "factorium", version: "2.1.0"
+
+    testFixturesApi group: "io.github.sbeausoleil", name: "factorium", version: "2.1.0"
+    testFixturesImplementation group: "jakarta.annotation", name: "jakarta.annotation-api", version: "3.0.0"
+    testFixturesCompileOnly 'org.projectlombok:lombok:1.18.36'
+    testFixturesAnnotationProcessor 'org.projectlombok:lombok:1.18.36'
+
+    jmhImplementation group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.37'
+    jmhAnnotationProcessor  group: 'org.openjdk.jmh', name: 'jmh-generator-annprocess', version: '1.37'
 }
 
 test {

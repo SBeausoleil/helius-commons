@@ -1,6 +1,7 @@
 package systems.helius.commons.reflection;
 
 import jakarta.annotation.Nullable;
+import systems.helius.commons.collections.BridgingIterator;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -10,17 +11,26 @@ import java.util.*;
 import static java.lang.invoke.MethodHandles.Lookup;
 
 public class BeanIntrospector {
-    protected IntrospectionSettings defaults;
-    protected ClassInspector classInspector = new ClassInspector();
+    protected final IntrospectionSettings defaults;
+    protected final ClassInspector classInspector;
 
     // IMPROVEMENT a map of fields and varhandles that are already known to resolve them?
 
     public BeanIntrospector() {
-        defaults = new IntrospectionSettings();
+        this(null, null);
     }
 
     public BeanIntrospector(IntrospectionSettings defaults) {
-        this.defaults = defaults;
+        this(defaults, null);
+    }
+
+    public BeanIntrospector(ClassInspector classInspector) {
+        this(null, classInspector);
+    }
+
+    public BeanIntrospector(@Nullable IntrospectionSettings defaults, @Nullable ClassInspector classInspector) {
+        this.defaults = Objects.requireNonNullElseGet(defaults, IntrospectionSettings::new);
+        this.classInspector = Objects.requireNonNullElseGet(classInspector, CachingClassInspector::new);
     }
 
     /*
@@ -93,7 +103,7 @@ public class BeanIntrospector {
         } else {
             try {
                 Lookup lookup = classInspector.getPrivilegedLookup(current.getClass(), rootContext, parent, false);
-                singularObjectScenario(targetType, current, rootContext, settings, found, visited, depth, lookup, holdingField);
+                detailedInspectionScenario(targetType, current, rootContext, settings, found, visited, depth, lookup, holdingField);
             } catch (TracedAccessException e) {
                 if (!settings.useSafeAccessCheck()) {
                     e.addStep(holdingField);
@@ -103,14 +113,16 @@ public class BeanIntrospector {
         }
     }
 
-    protected <T> void singularObjectScenario(Class<T> targetType, Object current,
-                                              Lookup rootContext, IntrospectionSettings settings,
-                                              Set<T> found, Set<Object> visited, int depth,
-                                              Lookup currentPrivilegedLookup, Field holdingField) throws TracedAccessException {
-        LinkedHashMap<Class<?>, Field[]> fields = ClassInspector.getAllFieldsHierarchical(current.getClass());
+    protected <T> void detailedInspectionScenario(Class<T> targetType, Object current,
+                                                  Lookup rootContext, IntrospectionSettings settings,
+                                                  Set<T> found, Set<Object> visited, int depth,
+                                                  Lookup currentPrivilegedLookup, Field holdingField) throws TracedAccessException {
+
+        // TODO replace this with a call to ClassInspector.getAllFieldsHandles
+        Map<Class<?>, List<Field>> fields = classInspector.getAllFieldsHierarchical(current.getClass());
         if (fields.isEmpty()) return;
 
-        for (Map.Entry<Class<?>, Field[]> entry : fields.entrySet()) {
+        for (Map.Entry<Class<?>, List<Field>> entry : fields.entrySet()) {
             if (currentPrivilegedLookup.lookupClass() != entry.getKey()) {
                 // This grants access to the private fields within superclasses
                 try {
@@ -152,7 +164,15 @@ public class BeanIntrospector {
         }
     }
 
-    protected <T> void iterativeScenario(Class<T> targetType, Lookup rootContext, IntrospectionSettings settings, Set<T> found, Set<Object> visited, int depth, Object value, Lookup lookup, Field holdingField) throws TracedAccessException {
+
+    /*
+    Suppressing the warnings is required, as we are intentionally polluting the heap in the map scenario.
+    Our pollution here is safe, as the polluted memory of the raw BridgingIterator never leaves the context
+    of this method and we never do any operation within this method that operates on assumptions of the typing
+    of the iterator since itself announces itself as a wildcard iterator.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private <T> void iterativeScenario(Class<T> targetType, Lookup rootContext, IntrospectionSettings settings, Set<T> found, Set<Object> visited, int depth, Object value, Lookup lookup, Field holdingField) throws TracedAccessException {
         Iterator<?> it;
         if (value.getClass().isArray()) {
             if (value.getClass().getComponentType().isPrimitive()) {
@@ -167,8 +187,10 @@ public class BeanIntrospector {
             }
         } else if (value instanceof Iterable<?> i) {
             it = i.iterator();
+        } else if (value instanceof Map<?, ?> map) {
+            it = new BridgingIterator(map.keySet(), map.values());
         } else {
-            it = ((Map<?, ?>) value).entrySet().iterator();
+            throw new UnsupportedOperationException("Type " + value.getClass() + " is not supported by the iterable scenario.");
         }
         while (it.hasNext()) {
             depthFirstSearch(targetType, it.next(), holdingField, rootContext, lookup, settings, found, visited, depth + 1);

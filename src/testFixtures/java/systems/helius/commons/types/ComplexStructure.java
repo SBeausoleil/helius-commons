@@ -1,7 +1,11 @@
 package systems.helius.commons.types;
 
-import java.util.Objects;
+import lombok.EqualsAndHashCode;
 
+import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
+
+@EqualsAndHashCode
 public class ComplexStructure {
     public static class MiddleStrata {
         public static class IntHolder {
@@ -38,10 +42,23 @@ public class ComplexStructure {
         public MiddleStrata(IntHolder hiddenIntHolder) {
             this.privateInnerClass = new PrivateInnerClass(hiddenIntHolder);
         }
+
+        @Override
+        public String toString() {
+            return "MiddleStrata{" +
+                    "id=" + privateInnerClass.hiddenIntHolder.id +
+                    '}';
+        }
     }
 
     private MiddleStrata a;
     private MiddleStrata b;
+
+    protected ComplexStructure() {
+        ThreadLocalRandom rng = ThreadLocalRandom.current();
+        this.a = new MiddleStrata(new MiddleStrata.IntHolder(rng.nextInt()));
+        this.b = new MiddleStrata(new MiddleStrata.IntHolder(rng.nextInt()));
+    }
 
     public ComplexStructure(MiddleStrata.IntHolder idOfA, MiddleStrata.IntHolder idOfB) {
         this.a = new MiddleStrata(idOfA);
