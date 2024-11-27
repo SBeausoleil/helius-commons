@@ -6,10 +6,23 @@ import java.util.function.Predicate;
 public final class IteratorUtils {
     private IteratorUtils() {}
 
+    /**
+     * Put all the values of the iterator in a list.
+     * @param it to exhaust.
+     * @return a list containing all the values the iterator would normally allow iteration over.
+     * @param <T> the type of values referred to by the iterator.
+     */
     public static <T> List<T> drain(Iterator<T> it) {
         return drain(it, new ArrayList<T>());
     }
 
+    /**
+     * Put all the values of the iterator into the received collection.
+     * @param it to exhaust.
+     * @param into will receive all the values of the iterator.
+     * @return the `into` argument with all the values the iterator would normally allow iteration over.
+     * @param <T> the type of values referred to by the iterator.
+     */
     public static <Buffer extends Collection<T>, T> Buffer drain(Iterator<T> it, Buffer into) {
         while (it.hasNext()) {
             into.add(it.next());
