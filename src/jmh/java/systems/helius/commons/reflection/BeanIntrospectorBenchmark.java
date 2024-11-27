@@ -29,19 +29,18 @@ public class BeanIntrospectorBenchmark {
 
     @State(Scope.Thread)
     public static class ExecutionPlan {
-        private static final SchoolGenerator generator = new SchoolGenerator();
+        private static final SchoolGenerator schoolGenerator = new SchoolGenerator();
         School school;
-        @Param({"1", "10", "100", "1000"})
+        @Param({"100", "1000"})
         int nStudents;
-        @Param({"1", "10", "100", "1000"})
+        @Param({"100", "1000"})
         int nTeachers;
 
-        @Setup(Level.Iteration)
+        @Setup(Level.Invocation)
         public void setupSchool() {
-            System.out.println("Setting up school with " + nStudents + " students and " + nTeachers + " teachers");
-            school = generator.generate();
-            generator.addStudents(school, nStudents);
-            generator.addTeachers(school, nTeachers);
+            school = schoolGenerator.generate();
+            schoolGenerator.addStudents(school, nStudents);
+            schoolGenerator.addTeachers(school, nTeachers);
         }
     }
 
