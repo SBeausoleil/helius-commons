@@ -14,17 +14,15 @@ You then call the `seek(Class, Object, MethodHandles.Lookup` method on it.
 Example:
 ```java
     // Setup
-    var firstId = new IntHolder(1);
-    var secondId =  new IntHolder(2);
-    var structure = new ComplexStructure(new IntHolder(1), new IntHolder(2));
+    var structure = new ComplexStructure();
 
     // Usage
-    Set<IntHolder> found = new BeanIntrospector().seek(IntHolder.class, structure, MethodHandles.lookup());
+    Set<Foo> found = new BeanIntrospector().seek(Foo.class, structure, MethodHandles.lookup());
     
     // Validation
     assertEquals(2, found.size());
-    assertTrue(found.contains(firstId));
-    assertTrue(found.contains(secondId));
+    assertTrue(found.contains(/* Some Foo I know is already hidden in the object graph of the structure */));
+    assertTrue(found.contains(/* Another one */));
 ```
 For more examples, look at [the tests](https://github.com/SBeausoleil/helius-commons/blob/master/src/test/java/systems/helius/commons/reflection/BeanIntrospectorTest.java).
 You may reuse the same BeanIntrospector across different calls. 
