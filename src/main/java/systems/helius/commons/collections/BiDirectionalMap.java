@@ -1,16 +1,18 @@
 package systems.helius.commons.collections;
 
-import systems.helius.commons.annotations.Internal;
-import systems.helius.commons.annotations.Unstable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * A simple BiDirectionalMap implementation.
  * Unlike a traditional map, both keys and values are unique.
- * Not inherently thread-safe for writing.
- * @param <K>
- * @param <T>
+ * Not inherently thread-safe for writing. If you need a thread-safe implementation, use one of the
+ * constructors that allows you to provide the underlying Map implementation to provide a thread-safe
+ * implementation, such as ConcurrentHashMap.
+ *
+ * @param <K> the type of keys
+ * @param <T> the type of values
  */
 public class BiDirectionalMap<K, T> implements Map<K, T> {
     protected Map<K, T> keyToValue;
@@ -21,9 +23,23 @@ public class BiDirectionalMap<K, T> implements Map<K, T> {
         this.valueToKey = new HashMap<>();
     }
 
-    // Not sure, as this could allow keeping control of the maps externally and altering them,
-    // thus rendering this map in an invalid state
-    @Internal
+    /**
+     * Create a BiDirectionalMap whose backing maps are built by the provided Supplier
+     * @param constructor provides new instances of the desired map implementation.
+     */
+    @SuppressWarnings("unchecked")
+    public BiDirectionalMap(Supplier<? extends Map<?, ?>> constructor) {
+        this.keyToValue = (Map<K, T>) constructor.get();
+        this.valueToKey = (Map<T, K>) constructor.get();
+    }
+
+    /**
+     * Create a BiDirectionalMap with the backing map implementations.
+     *
+     * @param keyMap   the map to use for the key-values
+     * @param valueMap the map to use for the value-keys
+     * @throws IllegalArgumentException if any of the argument map is not empty.
+     */
     public BiDirectionalMap(Map<K, T> keyMap, Map<T, K> valueMap) {
         if (!keyMap.isEmpty())
             throw new IllegalArgumentException("keyMap must be empty");

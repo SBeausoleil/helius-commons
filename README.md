@@ -2,7 +2,7 @@
 [Published on Maven Central:](https://central.sonatype.com/artifact/systems.helius/helius-commons)
 
 ```
-implementation group: 'systems.helius', name: 'helius-commons', version: '0.1'
+implementation group: 'systems.helius', name: 'helius-commons', version: '0.3.0'
 ```
 
 
@@ -24,6 +24,9 @@ Example:
     assertTrue(found.contains(/* Some Foo I know is already hidden in the object graph of the structure */));
     assertTrue(found.contains(/* Another one */));
 ```
+In this example, IntHolder is a deeply nested (4 classes down) class and attribute within [ComplexStructure](https://github.com/SBeausoleil/helius-commons/blob/master/src/testFixtures/java/systems/helius/commons/types/ComplexStructure.java).
+
+
 For more examples, look at [the tests](https://github.com/SBeausoleil/helius-commons/blob/master/src/test/java/systems/helius/commons/reflection/BeanIntrospectorTest.java).
 You may reuse the same BeanIntrospector across different calls. 
 

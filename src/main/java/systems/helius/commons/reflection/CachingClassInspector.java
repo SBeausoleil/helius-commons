@@ -43,12 +43,8 @@ public final class CachingClassInspector extends ClassInspector {
      * @param clazz to analyze
      * @return all the fields that members of clazz have.
      */
+    @Override
     public List<Field> getAllFieldsFlat(Class<?> clazz) {
-        List<Field> result = flatCache.get(clazz);
-        if (result == null) {
-            result = List.copyOf(super.getAllFieldsFlat(clazz));
-            flatCache.put(clazz, result);
-        }
-        return result;
+        return flatCache.computeIfAbsent(clazz, super::getAllFieldsFlat);
     }
 }

@@ -13,7 +13,7 @@ public final class IteratorUtils {
      * @param <T> the type of values referred to by the iterator.
      */
     public static <T> List<T> drain(Iterator<T> it) {
-        return drain(it, new ArrayList<T>());
+        return drain(it, new ArrayList<>());
     }
 
     /**
@@ -22,8 +22,9 @@ public final class IteratorUtils {
      * @param into will receive all the values of the iterator.
      * @return the `into` argument with all the values the iterator would normally allow iteration over.
      * @param <T> the type of values referred to by the iterator.
+     * @param <B> the type of #into.
      */
-    public static <Buffer extends Collection<T>, T> Buffer drain(Iterator<T> it, Buffer into) {
+    public static <B extends Collection<T>, T> B drain(Iterator<T> it, B into) {
         while (it.hasNext()) {
             into.add(it.next());
         }
@@ -38,7 +39,7 @@ public final class IteratorUtils {
      * @param <T> type of the iterator content.
      */
     public static <T> List<T> drainUntil(Iterator<T> it, Predicate<T> endCondition) {
-        return drainUntil(it, new ArrayList<T>(), endCondition);
+        return drainUntil(it, new ArrayList<>(), endCondition);
     }
 
 
@@ -48,8 +49,9 @@ public final class IteratorUtils {
      * @param endCondition the drain operation stops once an element is read that meets the predicate.
      * @return the buffer
      * @param <T> type of the iterator content.
+     * @param <B> the type of buffer
      */
-    public static <Buffer extends Collection<T>, T> Buffer drainUntil(Iterator<T> it, Buffer buffer, Predicate<T> endCondition) {
+    public static <B extends Collection<T>, T> B drainUntil(Iterator<T> it, B buffer, Predicate<T> endCondition) {
         while (it.hasNext()) {
             T current = it.next();
             buffer.add(current);

@@ -29,7 +29,9 @@ public sealed class ClassInspector permits CachingClassInspector {
         PRIMITIVE_WRAPPERS.put(Character.class, char.class);
     }
 
-    public ClassInspector() {}
+    public ClassInspector() {
+        // Preserve the empty constructor to guarantee future API compatibility
+    }
 
     /**
      * Get all the fields that are present in members of a given class.
