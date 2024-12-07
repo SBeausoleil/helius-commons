@@ -15,9 +15,9 @@ import java.lang.reflect.Method;
 import static java.lang.invoke.MethodHandles.Lookup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class HandlesLookupTests {
+class HandlesLookupTests {
     @Test
-    public void testViaFieldName() throws Throwable {
+    void testViaFieldName() throws Throwable {
         Lookup lookup = MethodHandles.privateLookupIn(Foo.class, MethodHandles.lookup());
         MethodHandle fieldNameAccess = lookup.findGetter(Foo.class, "a", int.class);
         var foo = new Foo(5, "Hello world");
@@ -26,7 +26,7 @@ public class HandlesLookupTests {
     }
 
     @Test
-    public void testViaMethodName_reflection() throws Throwable {
+    void testViaMethodName_reflection() throws Throwable {
         Lookup lookup = MethodHandles.lookup().in(Foo.class);
         Method getterMethod = lookup.lookupClass().getMethod("getA");
         var foo = new Foo(5, "Hello world");
@@ -35,7 +35,7 @@ public class HandlesLookupTests {
     }
 
     @Test
-    public void testViaMethodName_virtualLookup() throws Throwable {
+    void testViaMethodName_virtualLookup() throws Throwable {
         Lookup lookup = MethodHandles.lookup().in(Foo.class);
         MethodType methodType = MethodType.methodType(int.class);
         MethodHandle getterMethod = lookup.findVirtual(lookup.lookupClass(), "getA", methodType);
@@ -45,7 +45,7 @@ public class HandlesLookupTests {
     }
 
     @Test
-    public void testViaMethodName_methodHandle() throws Throwable {
+    void testViaMethodName_methodHandle() throws Throwable {
         Lookup lookup = MethodHandles.lookup().in(Foo.class);
         MethodType methodType = MethodType.methodType(int.class);
         MethodHandle getterMethod = lookup.findVirtual(lookup.lookupClass(), "getA", methodType);
@@ -55,7 +55,7 @@ public class HandlesLookupTests {
     }
 
     @Test
-    public void testViaMethodName_methodHandle_invokeExactWithInheritance() throws Throwable {
+    void testViaMethodName_methodHandle_invokeExactWithInheritance() throws Throwable {
         Lookup lookup = MethodHandles.lookup().in(ChildClassA.class);
         MethodType methodType = MethodType.methodType(int.class);
         MethodHandle getterMethod = lookup.findVirtual(lookup.lookupClass(), "getSuperclassField", methodType);
@@ -69,7 +69,7 @@ public class HandlesLookupTests {
     }
 
     @Test
-    public void testViaVarHandle() throws Throwable {
+    void testViaVarHandle() throws Throwable {
         Lookup lookup = MethodHandles.privateLookupIn(Superclass.class, MethodHandles.lookup());
         VarHandle varHandle = lookup.findVarHandle(ChildClassA.class, "superclassField", int.class);
         var foo = new ChildClassA(5, "Foo");
@@ -78,7 +78,7 @@ public class HandlesLookupTests {
     }
 
     @Test
-    public void testPrivateAccess_withVirtualGetter() throws Throwable {
+    void testPrivateAccess_withVirtualGetter() throws Throwable {
         Lookup origin = MethodHandles.lookup();
         Lookup lookup = origin.in(ChildClassA.class);
         var foo = new ChildClassA(5, "Foo");
@@ -111,7 +111,7 @@ public class HandlesLookupTests {
     }
 
     @Test
-    public void testAccessToInheritedPrivateFields() throws NoSuchFieldException, IllegalAccessException {
+    void testAccessToInheritedPrivateFields() throws NoSuchFieldException, IllegalAccessException {
         var child = new ChildClassA(5, "Foo");
 
         Lookup privateLookup = MethodHandles.privateLookupIn(Superclass.class, MethodHandles.lookup());

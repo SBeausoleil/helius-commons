@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SonarLintProjectSettings">
+    <option name="fileExclusions">
+      <list>
+        <option value="FILE:src/test/java/systems/helius/commons/reflection/HandlesLookupTests.java" />
+        <option value="DIRECTORY:src/testFixtures/java/systems/helius/commons/types" />
+        <option value="DIRECTORY:src/jmh" />
+      </list>
+    </option>
+  </component>
+</project>
