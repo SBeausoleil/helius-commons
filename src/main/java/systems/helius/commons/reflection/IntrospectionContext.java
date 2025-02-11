@@ -1,58 +1,13 @@
 package systems.helius.commons.reflection;
 
-import jakarta.annotation.Nullable;
+import systems.helius.commons.annotations.Internal;
 
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Field;
+import java.util.Set;
 
-public class IntrospectionContext {
-    private final Class<?> rootClass;
-    private Class<?> currentClass;
-    private Field currentField;
-    private MethodHandles.Lookup lookup;
-    private IntrospectionSettings settings;
-
-    public IntrospectionContext(Class<?> rootClass, Class<?> currentClass, Field currentField, MethodHandles.Lookup lookup, IntrospectionSettings settings) {
-        this.rootClass = rootClass;
-        this.currentClass = currentClass;
-        this.currentField = currentField;
-        this.lookup = lookup;
-        this.settings = settings;
-    }
-
-    public Class<?> getRootClass() {
-        return rootClass;
-    }
-
-    public Class<?> getCurrentClass() {
-        return currentClass;
-    }
-
-    public void setCurrentClass(Class<?> currentClass) {
-        this.currentClass = currentClass;
-    }
-
-    public Field getCurrentField() {
-        return currentField;
-    }
-
-    public void setCurrentField(Field currentField) {
-        this.currentField = currentField;
-    }
-
-    public MethodHandles.Lookup getLookup() {
-        return lookup;
-    }
-
-    public void setLookup(MethodHandles.Lookup lookup) {
-        this.lookup = lookup;
-    }
-
-    public IntrospectionSettings getSettings() {
-        return settings;
-    }
-
-    public void setSettings(IntrospectionSettings settings) {
-        this.settings = settings;
-    }
+@Internal
+public record IntrospectionContext<T>(Class<T> targetType,
+                               MethodHandles.Lookup rootLookup,
+                               Set<T> found,
+                               Set<Object> visited) {
 }
