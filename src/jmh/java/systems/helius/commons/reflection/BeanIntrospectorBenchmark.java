@@ -10,9 +10,9 @@ import java.util.concurrent.TimeUnit;
 
 @BenchmarkMode(Mode.All)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Fork(value = 1)
-@Warmup(time = 5, iterations = 2)
-@Measurement(time = 5, iterations = 2)
+@Fork(value = 2)
+@Warmup(time = 5, iterations = 5)
+@Measurement(time = 5, iterations = 5)
 public class BeanIntrospectorBenchmark {
 
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
