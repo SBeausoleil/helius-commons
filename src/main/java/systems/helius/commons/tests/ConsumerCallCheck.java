@@ -1,6 +1,9 @@
 package systems.helius.commons.tests;
 
 import java.util.function.Consumer;
+import java.util.function.DoubleConsumer;
+import java.util.function.IntConsumer;
+import java.util.function.LongConsumer;
 
 /**
  * A simple consumer that counts the number of times it has been called.
@@ -22,6 +25,18 @@ public class ConsumerCallCheck<T> implements Consumer<T> {
      */
     public <O> Consumer<O> bend() {
         return o -> nCalls++;
+    }
+
+    public IntConsumer bendInt() {
+        return i -> nCalls++;
+    }
+
+    public LongConsumer bendLong() {
+        return l -> nCalls++;
+    }
+
+    public DoubleConsumer bendDouble() {
+        return d -> nCalls++;
     }
 
     /**
