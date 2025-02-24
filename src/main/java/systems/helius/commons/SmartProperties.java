@@ -1,9 +1,8 @@
 package systems.helius.commons;
 
-import jakarta.annotation.Nullable;
 import systems.helius.commons.exceptions.InvalidFormatException;
 
-import java.util.Properties;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import java.util.function.IntConsumer;
@@ -60,16 +59,13 @@ public class SmartProperties extends Properties {
         throw new InvalidFormatException(value, "true|false", "yes|no", "on|off", "0|1");
     }
 
-    public Boolean getBooleanOrNull(String key) {
+    public Optional<Boolean> getBoolean(String key) {
         String value = getProperty(key);
-        return value != null ? parseBoolean(value) : null;
+        return Optional.ofNullable(value != null ? parseBoolean(value) : null);
     }
 
-    public SmartProperties ifBooleanPresent(String key, Consumer<Boolean> consumer) {
-        Boolean value = getBooleanOrNull(key);
-        if (value != null) {
-            consumer.accept(null);
-        }
+    public SmartProperties ifBooleanPresent(String key, Consumer<Boolean> then) {
+        getBoolean(key).ifPresent(then);
         return this;
     }
 
@@ -78,16 +74,13 @@ public class SmartProperties extends Properties {
         return value != null ? Byte.parseByte(value) : defaultValue;
     }
 
-    public @Nullable Byte getByteOrNull(String key) {
+    public Optional<Byte> getByte(String key) {
         String value = getProperty(key);
-        return value != null ? Byte.parseByte(value) : null;
+        return Optional.ofNullable(value != null ? Byte.parseByte(value) : null);
     }
 
-    public SmartProperties ifBytePresent(String key, Consumer<Byte> consumer) {
-        Byte value = getByteOrNull(key);
-        if (value != null) {
-            consumer.accept(value);
-        }
+    public SmartProperties ifBytePresent(String key, Consumer<Byte> then) {
+        getByte(key).ifPresent(then);
         return this;
     }
 
@@ -96,16 +89,13 @@ public class SmartProperties extends Properties {
         return value != null && !value.isEmpty() ? value.charAt(0) : defaultValue;
     }
 
-    public @Nullable Character getCharOrNull(String key) {
+    public Optional<Character> getChar(String key) {
         String value = getProperty(key);
-        return value != null && !value.isEmpty() ? value.charAt(0) : null;
+        return Optional.ofNullable(value != null && !value.isEmpty() ? value.charAt(0) : null);
     }
 
-    public SmartProperties ifCharPresent(String key, Consumer<Character> consumer) {
-        Character value = getCharOrNull(key);
-        if (value != null) {
-            consumer.accept(value);
-        }
+    public SmartProperties ifCharPresent(String key, Consumer<Character> then) {
+        getChar(key).ifPresent(then);
         return this;
     }
 
@@ -114,16 +104,13 @@ public class SmartProperties extends Properties {
         return value != null ? Short.parseShort(value) : defaultValue;
     }
 
-    public @Nullable Short getShortOrNull(String key) {
+    public Optional<Short> getShort(String key) {
         String value = getProperty(key);
-        return value != null ? Short.parseShort(value) : null;
+        return Optional.ofNullable(value != null ? Short.parseShort(value) : null);
     }
 
-    public SmartProperties ifShortPresent(String key, Consumer<Short> consumer) {
-        Short value = getShortOrNull(key);
-        if (value != null) {
-            consumer.accept(value);
-        }
+    public SmartProperties ifShortPresent(String key, Consumer<Short> then) {
+        getShort(key).ifPresent(then);
         return this;
     }
 
@@ -132,16 +119,13 @@ public class SmartProperties extends Properties {
         return value != null ? Integer.parseInt(value) : defaultValue;
     }
 
-    public Integer getIntOrNull(String key) {
+    public OptionalInt getInt(String key) {
         String value = getProperty(key);
-        return value != null ? Integer.parseInt(value) : null;
+        return value != null ? OptionalInt.of(Integer.parseInt(value)) : OptionalInt.empty();
     }
 
-    public SmartProperties ifIntPresent(String key, IntConsumer consumer) {
-        Integer value = getIntOrNull(key);
-        if (value != null) {
-            consumer.accept(value);
-        }
+    public SmartProperties ifIntPresent(String key, IntConsumer then) {
+        getInt(key).ifPresent(then);
         return this;
     }
 
@@ -150,16 +134,13 @@ public class SmartProperties extends Properties {
         return value != null ? Long.parseLong(value) : defaultValue;
     }
 
-    public Long getLongOrNull(String key) {
+    public OptionalLong getLong(String key) {
         String value = getProperty(key);
-        return value != null ? Long.parseLong(value) : null;
+        return value != null ? OptionalLong.of(Long.parseLong(value)) : OptionalLong.empty();
     }
 
-    public SmartProperties ifLongPresent(String key, LongConsumer consumer) {
-        Long value = getLongOrNull(key);
-        if (value != null) {
-            consumer.accept(value);
-        }
+    public SmartProperties ifLongPresent(String key, LongConsumer then) {
+        getLong(key).ifPresent(then);
         return this;
     }
 
@@ -168,16 +149,13 @@ public class SmartProperties extends Properties {
         return value != null ? Float.parseFloat(value) : defaultValue;
     }
 
-    public Float getFloatOrNull(String key) {
+    public Optional<Float> getFloat(String key) {
         String value = getProperty(key);
-        return value != null ? Float.parseFloat(value) : null;
+        return Optional.ofNullable(value != null ? Float.parseFloat(value) : null);
     }
 
-    public SmartProperties ifFloatPresent(String key, Consumer<Float> consumer) {
-        Float value = getFloatOrNull(key);
-        if (value != null) {
-            consumer.accept(value);
-        }
+    public SmartProperties ifFloatPresent(String key, Consumer<Float> then) {
+        getFloat(key).ifPresent(then);
         return this;
     }
 
@@ -186,34 +164,27 @@ public class SmartProperties extends Properties {
         return value != null ? Double.parseDouble(value) : defaultValue;
     }
 
-    public Double getDoubleOrNull(String key) {
+    public OptionalDouble getDouble(String key) {
         String value = getProperty(key);
-        return value != null ? Double.parseDouble(value) : null;
+        return value != null ? OptionalDouble.of(Double.parseDouble(value)) : OptionalDouble.empty();
     }
 
-    public SmartProperties ifDoublePresent(String key, DoubleConsumer consumer) {
-        Double value = getDoubleOrNull(key);
-        if (value != null) {
-            consumer.accept(value);
-        }
+    public SmartProperties ifDoublePresent(String key, DoubleConsumer then) {
+        getDouble(key).ifPresent(then);
         return this;
     }
 
-    public <T extends Enum<T>> @Nullable T getEnum(String key, Class<T> enumClass) {
+    public <T extends Enum<T>> Optional<T> getEnum(String key, Class<T> enumClass) {
         String value = getProperty(key);
-        return value != null ? Enum.valueOf(enumClass, value) : null;
+        return Optional.ofNullable(value != null ? Enum.valueOf(enumClass, value) : null);
     }
 
     public <T extends Enum<T>> T getEnum(String key, Class<T> enumClass, T defaultValue) {
-        T value = getEnum(key, enumClass);
-        return value != null ? value : defaultValue;
+        return getEnum(key, enumClass).orElse(defaultValue);
     }
 
-    public <T extends Enum<T>> SmartProperties ifEnumPresent(String key, Class<T> enumClass, Consumer<T> consumer) {
-        T value = getEnum(key, enumClass);
-        if (value != null) {
-            consumer.accept(value);
-        }
+    public <T extends Enum<T>> SmartProperties ifEnumPresent(String key, Class<T> enumClass, Consumer<T> then) {
+        getEnum(key, enumClass).ifPresent(then);
         return this;
     }
 }
