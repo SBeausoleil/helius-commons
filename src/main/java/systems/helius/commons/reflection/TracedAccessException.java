@@ -55,6 +55,9 @@ public class TracedAccessException extends Exception {
         return duringFieldRead;
     }
 
+    /**
+     * Indicates that the cause exception should be propagated instead of this TracedAccessException.
+     */
     public boolean isException() {
         return !duringFieldRead;
     }

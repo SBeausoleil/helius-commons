@@ -26,9 +26,9 @@ public class InvalidFormatException extends IllegalArgumentException {
         if (value != null) {
             sb.append("The value \"");
             sb.append(value);
-            sb.append("\" is not correctly formatted.");
+            sb.append("\" is not correctly formatted. ");
         } else {
-            sb.append("The value is null and that is not supported.");
+            sb.append("The value is null and that is not supported. ");
         }
         addFormatsInfo(supported, sb);
         return sb.toString();
@@ -37,7 +37,7 @@ public class InvalidFormatException extends IllegalArgumentException {
     private static void addFormatsInfo(String[] supported, StringBuilder sb) {
         if (supported.length > 0) {
             sb.append("Supported formats are: [");
-            sb.append(String.join("or", supported));
+            sb.append(String.join(" or ", supported));
             sb.append("].");
         }
     }
