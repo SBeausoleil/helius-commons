@@ -149,8 +149,7 @@ public sealed class ClassInspector permits CachingClassInspector {
                             + (forSuperclass ? "\n Accessing superclass of: " + parent.lookupClass()
                             : ".\n Parent class: " + parentException.getMessage())
                             + ",\n root context: " + rootContextException.getMessage()
-                            + ",\n library context: " + libraryLookupException.getMessage(),
-                            false);
+                            + ",\n library context: " + libraryLookupException.getMessage());
                 }
             }
         }

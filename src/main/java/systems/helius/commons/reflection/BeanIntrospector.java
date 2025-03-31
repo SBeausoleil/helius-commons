@@ -3,6 +3,7 @@ package systems.helius.commons.reflection;
 import jakarta.annotation.Nullable;
 import systems.helius.commons.collections.BridgingIterator;
 
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -69,9 +70,7 @@ public class BeanIntrospector {
                     defaults);
         } catch (TracedAccessException e) {
             e.setRoot(root);
-            if (e.isException())
-                throw e.toIllegalAccessException();
-            throw e.toIllegalAccessError();
+            throw e.toIllegalAccessException();
         }
         return found;
     }
@@ -123,7 +122,7 @@ public class BeanIntrospector {
                                                   IntrospectionSettings settings)
             throws TracedAccessException {
 
-        // TODO replace this with a call to ClassInspector.getAllFieldsHandles
+        // Important, because this way we can partially skip unreachable locations if needed instead of being all or nothing
         Map<Class<?>, List<Field>> fields = classInspector.getAllFieldsHierarchical(current.getClass());
         if (fields.isEmpty()) return;
 
@@ -153,7 +152,7 @@ public class BeanIntrospector {
                         throw new TracedAccessException("Couldn't read the value of the field: " + field
                                 + ". This should be impossible. " +
                                 "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues" +
-                                " describing how this happened.", true, e);
+                                " describing how this happened.", e);
                     }
                     continue;
                 }

@@ -1,11 +1,15 @@
 package systems.helius.commons.reflection;
 
 import org.junit.jupiter.api.Test;
+import systems.helius.commons.types.ChildClassA;
 import systems.helius.commons.types.Foo;
+import systems.helius.commons.types.Superclass;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,5 +31,14 @@ class ClassInspectorTest {
         bHandle.set(foo, B_NEW_VALUE);
         assertEquals(B_NEW_VALUE, bHandle.get(foo));
         assertTrue(foo.toString().contains(B_NEW_VALUE));
+    }
+
+    @Test
+    void getAllFieldsFlat() {
+        List<Field> fields = new ClassInspector().getAllFieldsFlat(ChildClassA.class);
+        var expectedFields = new LinkedList<Field>();
+        expectedFields.addAll(List.of(ChildClassA.class.getDeclaredFields()));
+        expectedFields.addAll(List.of(Superclass.class.getDeclaredFields()));
+        assertEquals(expectedFields, fields);
     }
 }
