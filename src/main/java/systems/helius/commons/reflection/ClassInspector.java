@@ -73,6 +73,13 @@ public sealed class ClassInspector permits CachingClassInspector {
         return buffer;
     }
 
+    /**
+     * Get all the fields and their private handle that are present in members of a given class.
+     * @param clazz to analyze
+     * @param context the context of the lookup
+     * @return a map where the key is the field and the value its access handle.
+     * @throws IllegalAccessException if the context is not allowed to access the field
+     */
     public Map<Field, VarHandle> getAllFieldsHandles(Class<?> clazz, MethodHandles.Lookup context) throws IllegalAccessException {
         Map<Field, VarHandle> handles = new LinkedHashMap<>();
         var inspector = new ClassInspector();
@@ -142,8 +149,7 @@ public sealed class ClassInspector permits CachingClassInspector {
                             + (forSuperclass ? "\n Accessing superclass of: " + parent.lookupClass()
                             : ".\n Parent class: " + parentException.getMessage())
                             + ",\n root context: " + rootContextException.getMessage()
-                            + ",\n library context: " + libraryLookupException.getMessage(),
-                            false);
+                            + ",\n library context: " + libraryLookupException.getMessage());
                 }
             }
         }

@@ -6,10 +6,10 @@ import org.openjdk.jmh.infra.Blackhole;
 import java.util.concurrent.TimeUnit;
 
 @BenchmarkMode(Mode.All)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Fork(value = 1)
-@Warmup(time = 5, iterations = 2)
-@Measurement(time = 5, iterations = 2)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Fork(value = 2)
+@Warmup(time = 5, iterations = 5)
+@Measurement(time = 5, iterations = 5)
 public class ClassInspectorBenchmark {
 
     @Benchmark
@@ -25,10 +25,10 @@ public class ClassInspectorBenchmark {
     @State(Scope.Benchmark)
     public static class ExecutionPlan {
         @Param(value = {
-             //   "systems.helius.commons.types.Foo",
+                "systems.helius.commons.types.Foo",
                 "systems.helius.commons.types.DataClass",
-              //  "systems.helius.commons.types.ChildClassA",
-             //   "systems.helius.commons.types.ChildClassB",
+                "systems.helius.commons.types.ChildClassA",
+                "systems.helius.commons.types.ChildClassB",
                 "systems.helius.commons.types.ComplexChild"
         })
         String className;

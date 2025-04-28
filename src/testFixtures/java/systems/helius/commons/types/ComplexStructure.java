@@ -30,7 +30,7 @@ public class ComplexStructure {
         }
 
         private static class PrivateInnerClass {
-            IntHolder hiddenIntHolder;
+            private IntHolder hiddenIntHolder;
 
             public PrivateInnerClass(IntHolder hiddenIntHolder) {
                 this.hiddenIntHolder = hiddenIntHolder;

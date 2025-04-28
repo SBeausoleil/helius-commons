@@ -232,4 +232,17 @@ class BeanIntrospectorTest {
         assertEquals(toFind.size(), found.size());
         assertTrue(found.containsAll(toFind));
     }
+
+    @Test
+    void WhenSeekMapContent_GivenUseUnsafeAccessAndOutOfModuleCode_ThenFail() {
+        var settings = new IntrospectionSettings();
+        settings.setSafeAccessCheck(false);
+        var introspector = new BeanIntrospector(settings);
+        var map = new HashMap<String, Boolean>();
+        map.put("hello", true);
+        map.put("world", false);
+        assertThrows(IllegalAccessException.class, () -> {
+            introspector.seek(String.class, map, MethodHandles.lookup());
+        });
+    }
 }
