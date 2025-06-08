@@ -11,7 +11,7 @@ import java.util.Set;
  * @param rootLookup
  * @param found
  * @param visited
- * @param <T>
+ * @param <T> the target type
  */
 @Internal
 public record IntrospectionContext<T>(Class<T> targetType,

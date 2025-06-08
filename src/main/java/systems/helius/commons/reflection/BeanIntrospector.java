@@ -3,7 +3,6 @@ package systems.helius.commons.reflection;
 import jakarta.annotation.Nullable;
 import systems.helius.commons.collections.BridgingIterator;
 
-import java.lang.invoke.VarHandle;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -140,34 +139,37 @@ public class BeanIntrospector {
                 }
             }
             for (Field field : entry.getValue()) {
-                if (Modifier.isStatic(field.getModifiers()))
-                    continue;
-
-                Object value;
-                try {
-                    value = currentPrivilegedLookup.unreflectVarHandle(field).get(current);
-                } catch (IllegalAccessException e) {
-                    // Shouldn't happen as we are supposed to have a private level of access into the class...
-                    if (!settings.isIgnoreIllegalAccessError()) {
-                        throw new TracedAccessException("Couldn't read the value of the field: " + field
-                                + ". This should be impossible. " +
-                                "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues" +
-                                " describing how this happened.", e);
-                    }
-                    continue;
-                }
-                if (value != null) {
-                    try {
-                        depthFirstSearch(value, field, currentPrivilegedLookup, depth + 1, context, settings);
-                    } catch (TracedAccessException e) {
-                        e.addStep(field);
-                        throw e;
-                    }
-                }
+                deepInspectField(current, currentPrivilegedLookup, depth, context, settings, field);
             }
         }
     }
 
+    private <T> void deepInspectField(Object current, Lookup currentPrivilegedLookup, int depth, IntrospectionContext<T> context, IntrospectionSettings settings, Field field) throws TracedAccessException {
+        if (Modifier.isStatic(field.getModifiers()))
+            return;
+
+        Object value;
+        try {
+            value = currentPrivilegedLookup.unreflectVarHandle(field).get(current);
+        } catch (IllegalAccessException e) {
+            // Shouldn't happen as we are supposed to have a private level of access into the class...
+            if (!settings.isIgnoreIllegalAccessError()) {
+                throw new TracedAccessException("Couldn't read the value of the field: " + field
+                        + ". This should be impossible. " +
+                        "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues" +
+                        " describing how this happened.", e);
+            }
+            return;
+        }
+        if (value != null) {
+            try {
+                depthFirstSearch(value, field, currentPrivilegedLookup, depth + 1, context, settings);
+            } catch (TracedAccessException e) {
+                e.addStep(field);
+                throw e;
+            }
+        }
+    }
 
     /*
     Suppressing the warnings is required, as we are intentionally polluting the heap in the map scenario.
