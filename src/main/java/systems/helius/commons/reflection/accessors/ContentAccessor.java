@@ -3,6 +3,7 @@ package systems.helius.commons.reflection.accessors;
 import jakarta.annotation.Nullable;
 import systems.helius.commons.reflection.IntrospectionContext;
 import systems.helius.commons.reflection.IntrospectionSettings;
+import systems.helius.commons.reflection.TracedAccessException;
 
 import java.lang.reflect.Field;
 import java.util.stream.Stream;
@@ -10,7 +11,7 @@ import java.util.stream.Stream;
 /**
  * Provides access to the content of an Object.
  */
-public interface ContentAccessor extends Comparable<ContentAccessor> {
+public interface ContentAccessor {
     /**
      * Checks if this accessor accepts the current value.
      *
@@ -34,9 +35,12 @@ public interface ContentAccessor extends Comparable<ContentAccessor> {
      * @return a stream of the values within the current object.
      * This stream is not obligated to represent every single fields within the object,
      * it contains what matters to look into.
+     * @throws ChainComponentException an extraction is authorized to fail.
+     *                         The accessor must indicate whether the introspector
+     *                         is allowed to try other accessors for the same value.
      */
     <T> Stream<Content> extract(Object current,
-                               @Nullable Field holdingField,
-                               IntrospectionContext<T> context,
-                               IntrospectionSettings settings);
+                                @Nullable Field holdingField,
+                                IntrospectionContext<T> context,
+                                IntrospectionSettings settings) throws ChainComponentException;
 }

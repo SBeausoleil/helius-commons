@@ -2,6 +2,8 @@ package systems.helius.commons.reflection;
 
 import jakarta.annotation.Nullable;
 import systems.helius.commons.collections.BridgingIterator;
+import systems.helius.commons.exceptions.IntrospectionException;
+import systems.helius.commons.exceptions.LoookupAcquisitionException;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -58,10 +60,10 @@ public class BeanIntrospector {
      * @param root seek into
      * @param context the context of the caller. Should always be MethodHandles.lookup();
      * @return every instance found of the given type
-     * @throws IllegalAccessException if any access right issue is found.
+     * @throws IntrospectionException if any fatal access issues are encountered during the introspection.
      * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/IdentityHashMap.html">Java 17 API: IdentitHashMap</a>
      */
-    public <T> Set<T> seek(Class<T> targetType, Object root, Lookup context) throws IllegalAccessException {
+    public <T> Set<T> seek(Class<T> targetType, Object root, Lookup context) throws IntrospectionException {
         Set<T> found = Collections.newSetFromMap(new IdentityHashMap<>());
         Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         try {
@@ -69,7 +71,7 @@ public class BeanIntrospector {
                     defaults);
         } catch (TracedAccessException e) {
             e.setRoot(root);
-            throw e.toIllegalAccessException();
+            throw new IntrospectionException(e);
         }
         return found;
     }
@@ -102,12 +104,19 @@ public class BeanIntrospector {
             iterativeScenario(current, holdingField, parent, depth, context, settings);
         } else {
             try {
-                Lookup lookup = classInspector.getPrivilegedLookup(current.getClass(), context.rootLookup(), parent, false);
+                Lookup lookup = new LookupManager().getPrivilegedLookup(current.getClass(), context.rootLookup(), parent, false);
                 detailedInspectionScenario(current, lookup, holdingField, depth, context, settings);
-            } catch (TracedAccessException e) {
+            } catch (LoookupAcquisitionException | TracedAccessException e) {
                 if (!settings.useSafeAccessCheck()) {
-                    e.addStep(holdingField);
-                    throw e;
+                    TracedAccessException traced;
+                    if (!(e instanceof TracedAccessException)) {
+                        traced = new TracedAccessException(e);
+                    } else {
+                        traced = (TracedAccessException) e;
+                    }
+
+                    traced.addStep(holdingField);
+                    throw traced;
                 }
             }
         }
@@ -129,11 +138,12 @@ public class BeanIntrospector {
             if (currentPrivilegedLookup.lookupClass() != entry.getKey()) {
                 // This grants access to the private fields within superclasses
                 try {
-                    currentPrivilegedLookup = classInspector.getPrivilegedLookup(entry.getKey(), currentPrivilegedLookup, context.rootLookup(), true);
-                } catch (TracedAccessException e) {
+                    currentPrivilegedLookup = new LookupManager().getPrivilegedLookup(entry.getKey(), currentPrivilegedLookup, context.rootLookup(), true);
+                } catch (LoookupAcquisitionException e) {
                     if (!settings.useSafeAccessCheck()) {
-                        e.addStep(holdingField);
-                        throw e;
+                        var traced = new TracedAccessException(e);
+                        traced.addStep(holdingField);
+                        throw traced;
                     }
                     continue;
                 }

@@ -6,6 +6,7 @@ public class IntrospectionSettings {
      * If false, introspectors will throw an IllegalAccessException if faced with something it is not allowed to access.
      * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/IllegalAccessException.html">Java 17 API: IllegalAccessException</a>
      */
+    // TODO consider making this a per-introspector setting
     protected boolean safeAccessCheck = true;
     /**
      * Controls what happens when an IllegalAccessException occurs whilst reading a field's value using a privileged lookup.
@@ -37,8 +38,6 @@ public class IntrospectionSettings {
     protected boolean enterTargetType = true;
 
     protected int maxDepth = Integer.MAX_VALUE;
-
-    protected
 
     public boolean useSafeAccessCheck() {
         return safeAccessCheck;

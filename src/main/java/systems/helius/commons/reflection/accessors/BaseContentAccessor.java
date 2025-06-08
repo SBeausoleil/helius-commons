@@ -11,9 +11,4 @@ public abstract class BaseContentAccessor implements ContentAccessor {
     public int getPriority() {
         return priority;
     }
-
-    @Override
-    public int compareTo(ContentAccessor o) {
-        return Integer.compare(this.priority, o.priority);
-    }
 }
