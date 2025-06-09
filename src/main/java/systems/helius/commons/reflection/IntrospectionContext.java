@@ -1,6 +1,8 @@
 package systems.helius.commons.reflection;
 
 import systems.helius.commons.annotations.Internal;
+import systems.helius.commons.reflection.accessors.AccessorsChain;
+import systems.helius.commons.reflection.accessors.ContentAccessor;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Set;
@@ -15,7 +17,8 @@ import java.util.Set;
  */
 @Internal
 public record IntrospectionContext<T>(Class<T> targetType,
-                               MethodHandles.Lookup rootLookup,
-                               Set<T> found,
-                               Set<Object> visited) {
+                                      MethodHandles.Lookup rootLookup,
+                                      Set<T> found,
+                                      Set<Object> visited,
+                                      ContentAccessor contentAccessor) {
 }

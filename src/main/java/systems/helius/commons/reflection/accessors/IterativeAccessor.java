@@ -21,7 +21,7 @@ public class IterativeAccessor implements ContentAccessor {
     }
 
     @Override
-    public <T> Stream<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<T> context, IntrospectionSettings settings) {
+    public <T> Collection<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<T> context, IntrospectionSettings settings) {
         Stream<?> source;
         if (current.getClass().isArray()) {
             if (current.getClass().getComponentType().isPrimitive()) {
@@ -46,6 +46,6 @@ public class IterativeAccessor implements ContentAccessor {
             throw new UnsupportedOperationException("Type " + current.getClass() + " is not supported by the iterable scenario.");
         }
         final Field resultingField = holdingField;
-        return source.map(value -> new Content(value, resultingField));
+        return source.map(value -> new Content(value, resultingField)).toList();
     }
 }

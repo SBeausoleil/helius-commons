@@ -7,6 +7,8 @@ import systems.helius.commons.reflection.IntrospectionSettings;
 import systems.helius.commons.reflection.LookupManager;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -26,20 +28,27 @@ public class AccessorsChain implements ContentAccessor {
     }
 
     @Override
-    public <T> Stream<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<T> context, IntrospectionSettings settings) throws ChainComponentException {
+    public <T> Collection<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<T> context, IntrospectionSettings settings) throws ChainComponentException {
+        ChainComponentException delayedException = null;
         for (ContentAccessor chainElement : chain) {
             if (chainElement.accepts(current, holdingField, settings)) {
                 try {
                     return chainElement.extract(current, holdingField, context, settings);
                 } catch (ChainComponentException e) {
                     // TODO check if a cause is a TracedException
-                    if (!e.isAllowDelegation()) {
+                    if (!e.isAllowFallback()) {
                         throw e;
                     }
+                    delayedException = e;
                 }
             }
         }
+        if (delayedException != null) {
+            // TODO consider merging exceptions if multiple chain elements threw exceptions
+            // If we had a delayed exception, rethrow it
+            throw delayedException;
+        }
         // TODO check if any exception was thrown and if so, rethrow it
-        return Stream.empty();
+        return Collections.emptyList();
     }
 }

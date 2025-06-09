@@ -7,9 +7,7 @@ import systems.helius.commons.reflection.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class FieldHandlesAccessor implements ContentAccessor {
@@ -27,9 +25,9 @@ public class FieldHandlesAccessor implements ContentAccessor {
     }
 
     @Override
-    public <T> Stream<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<T> context, IntrospectionSettings settings) throws ChainComponentException {
+    public <T> Collection<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<T> context, IntrospectionSettings settings) throws ChainComponentException {
         Map<Class<?>, List<Field>> fields = classInspector.getAllFieldsHierarchical(current.getClass());
-        if (fields.isEmpty()) return Stream.empty();
+        if (fields.isEmpty()) return Collections.emptyList();
 
         var result = new ArrayList<Content>();
 
@@ -50,7 +48,7 @@ public class FieldHandlesAccessor implements ContentAccessor {
             for (Field field : entry.getValue()) {
                 try {
                     if (Modifier.isStatic(field.getModifiers()))
-                        return null;
+                        continue;
 
                     Object value = classLookup.unreflectVarHandle(field).get(current);
                     if (value != null) {
@@ -65,7 +63,7 @@ public class FieldHandlesAccessor implements ContentAccessor {
                 }
             }
         }
-        return result.stream();
+        return result;
     }
 
     private <T> MethodHandles.Lookup getClassLookup(Object current, IntrospectionContext<T> context) throws ChainComponentException {

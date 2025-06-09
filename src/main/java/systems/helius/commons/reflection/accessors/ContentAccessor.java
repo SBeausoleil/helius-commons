@@ -6,6 +6,7 @@ import systems.helius.commons.reflection.IntrospectionSettings;
 import systems.helius.commons.reflection.TracedAccessException;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.stream.Stream;
 
 /**
@@ -39,8 +40,8 @@ public interface ContentAccessor {
      *                         The accessor must indicate whether the introspector
      *                         is allowed to try other accessors for the same value.
      */
-    <T> Stream<Content> extract(Object current,
-                                @Nullable Field holdingField,
-                                IntrospectionContext<T> context,
-                                IntrospectionSettings settings) throws ChainComponentException;
+    <T> Collection<Content> extract(Object current,
+                                    @Nullable Field holdingField,
+                                    IntrospectionContext<T> context,
+                                    IntrospectionSettings settings) throws ChainComponentException;
 }

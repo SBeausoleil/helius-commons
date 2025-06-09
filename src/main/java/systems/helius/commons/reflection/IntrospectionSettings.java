@@ -19,6 +19,16 @@ public class IntrospectionSettings {
      * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html#unreflectVarHandle(java.lang.reflect.Field)">Java 17 API: Lookup.unreflectVarHandle</a>
      */
     protected boolean ignoreIllegalAccessError = false;
+
+    /**
+     * If true (default), fields that cause any exception when accessed will be skipped.
+     * If false, introspectors will throw an {@link systems.helius.commons.exceptions.IntrospectionException}
+     * if faced with an exception when accessing a field.
+     * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/IllegalAccessException.html">Java 17 API: IllegalAccessException</a>
+     */
+    // TODO consider making this a per-introspector setting
+    protected boolean skipOnException = true;
+
     /**
      * If true, Iterable classes will have their internals inspected as if they were a regular class.
      * If false (default), Iterable classes will only have their iterable elements inspected.

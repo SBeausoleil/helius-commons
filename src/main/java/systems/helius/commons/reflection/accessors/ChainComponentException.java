@@ -1,42 +1,47 @@
 package systems.helius.commons.reflection.accessors;
 
+/**
+ * Exception thrown by components of a responsibility chain.
+ * It indicates that an exception occurred within this component,
+ * and whether the process should fallback to the next component in the chain.
+ */
 public class ChainComponentException extends Exception {
     /**
-     * Indicates whether another accessor should be allowed to attempt to access the same value.
+     * Indicates whether another chain member should be allowed to attempt to continue the process.
      */
-    protected final boolean allowDelegation;
+    protected final boolean allowFallback;
 
     public ChainComponentException(String message) {
         super(message);
-        this.allowDelegation = true; // Default to allowing delegation
+        this.allowFallback = true; // Default to allowing delegation
     }
 
     public ChainComponentException(String message, Throwable cause) {
         super(message, cause);
-        this.allowDelegation = true; // Default to allowing delegation
+        this.allowFallback = true; // Default to allowing delegation
     }
 
     public ChainComponentException(Throwable cause) {
         super(cause);
-        this.allowDelegation = true; // Default to allowing delegation
+        this.allowFallback = true; // Default to allowing delegation
     }
 
-    public ChainComponentException(String message, boolean allowDelegation) {
+    public ChainComponentException(String message, boolean allowFallback) {
         super(message);
-        this.allowDelegation = allowDelegation;
+        this.allowFallback = allowFallback;
     }
 
-    public ChainComponentException(String message, Throwable cause, boolean allowDelegation) {
+    public ChainComponentException(String message, Throwable cause, boolean allowFallback) {
         super(message, cause);
-        this.allowDelegation = allowDelegation;
+        this.allowFallback = allowFallback;
     }
 
-    public ChainComponentException(Throwable cause, boolean allowDelegation) {
+    public ChainComponentException(Throwable cause, boolean allowFallback) {
         super(cause);
-        this.allowDelegation = allowDelegation;
+        this.allowFallback = allowFallback;
     }
 
-    public boolean isAllowDelegation() {
-        return allowDelegation;
+    public boolean isAllowFallback() {
+        return allowFallback;
     }
 }
