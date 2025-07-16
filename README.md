@@ -2,7 +2,7 @@
 [Published on Maven Central:](https://central.sonatype.com/artifact/systems.helius/helius-commons)
 
 ```
-implementation group: 'systems.helius', name: 'helius-commons', version: '0.3.0'
+implementation group: 'systems.helius', name: 'helius-commons', version: '0.4.0'
 ```
 
 
