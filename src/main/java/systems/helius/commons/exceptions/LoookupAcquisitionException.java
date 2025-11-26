@@ -1,6 +1,9 @@
 package systems.helius.commons.exceptions;
 
-
+/**
+ * Exception thrown when trying to lookup data, but some mechanism (such as module isolation)
+ * prevents the lookup.
+ */
 public class LoookupAcquisitionException extends IllegalAccessException {
     private static final long serialVersionUID = 1L;
 
@@ -8,6 +11,9 @@ public class LoookupAcquisitionException extends IllegalAccessException {
         super(message);
     }
 
+    /**
+     * Create a LookupAcquisitionException with a specific cause.
+     */
     public LoookupAcquisitionException(String message, Throwable cause) {
         super(message);
         initCause(cause);
