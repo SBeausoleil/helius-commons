@@ -35,13 +35,12 @@ public class AccessorsChain implements ContentAccessor {
      *                     Null when current is the root of the search.
      * @param context      the current introspection context
      * @param settings     settings of the current search
-     * @param <T> the target type that the BeanIntrospector is try
      * @return the content of the object
      * @throws ChainComponentException if a component of the chain throws an exception, it is thrown immediately if the exception does not allow for fallbacks.
      *                                 Otherwise, it is thrown only if none of the components managed to extract content and at least one threw an exception.
      */
     @Override
-    public <T> Collection<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<T> context, IntrospectionSettings settings) throws ChainComponentException {
+    public Collection<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<?> context, IntrospectionSettings settings) throws ChainComponentException {
         ChainComponentException delayedException = null;
         Collection<Content> extracted = null;
         for (ContentAccessor chainElement : chain) {

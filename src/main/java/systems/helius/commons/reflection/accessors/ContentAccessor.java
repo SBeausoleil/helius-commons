@@ -32,7 +32,6 @@ public interface ContentAccessor {
      *                     Null when current is the root of the search.
      * @param context      the current introspection context
      * @param settings     settings of the current search
-     * @param <T>          the type of values being sought.
      * @return a stream of the values within the current object.
      * This stream is not obligated to represent every single fields within the object,
      * it contains what matters to look into.
@@ -40,8 +39,8 @@ public interface ContentAccessor {
      *                         The accessor must indicate whether the introspector
      *                         is allowed to try other accessors for the same value.
      */
-    <T> Collection<Content> extract(Object current,
+    Collection<Content> extract(Object current,
                                     @Nullable Field holdingField,
-                                    IntrospectionContext<T> context,
+                                    IntrospectionContext<?> context,
                                     IntrospectionSettings settings) throws ChainComponentException;
 }

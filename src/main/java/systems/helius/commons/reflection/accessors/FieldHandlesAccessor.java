@@ -25,7 +25,7 @@ public class FieldHandlesAccessor implements ContentAccessor {
     }
 
     @Override
-    public <T> Collection<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<T> context, IntrospectionSettings settings) throws ChainComponentException {
+    public Collection<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<?> context, IntrospectionSettings settings) throws ChainComponentException {
         Map<Class<?>, List<Field>> fields = classInspector.getAllFieldsHierarchical(current.getClass());
         if (fields.isEmpty()) return Collections.emptyList();
 
@@ -66,7 +66,7 @@ public class FieldHandlesAccessor implements ContentAccessor {
         return result;
     }
 
-    private <T> MethodHandles.Lookup getClassLookup(Object current, IntrospectionContext<T> context) throws ChainComponentException {
+    private MethodHandles.Lookup getClassLookup(Object current, IntrospectionContext<?> context) throws ChainComponentException {
         MethodHandles.Lookup fakeParent = MethodHandles.lookup(); // TODO TEMPORARY ONLY FOR TESTS TO REPLACE THE PARENT LOOKUP
         try {
             return lookupManager.getPrivilegedLookup(current.getClass(), context.rootLookup(), fakeParent/*parent*/, false);

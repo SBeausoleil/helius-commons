@@ -21,7 +21,7 @@ public class IterativeAccessor implements ContentAccessor {
     }
 
     @Override
-    public <T> Collection<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<T> context, IntrospectionSettings settings) {
+    public Collection<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<?> context, IntrospectionSettings settings) {
         Stream<?> source;
         if (current.getClass().isArray()) {
             if (current.getClass().getComponentType().isPrimitive()) {
