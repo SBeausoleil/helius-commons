@@ -27,15 +27,29 @@ public class AccessorsChain implements ContentAccessor {
         return chain.stream().anyMatch(chainElement -> chainElement.accepts(current, holdingField, settings));
     }
 
+    /**
+     * Attempt to extract the content of the current object
+     *
+     * @param current      the current value to access the innards of.
+     * @param holdingField the field that contained the current value.
+     *                     Null when current is the root of the search.
+     * @param context      the current introspection context
+     * @param settings     settings of the current search
+     * @param <T> the target type that the BeanIntrospector is try
+     * @return the content of the object
+     * @throws ChainComponentException if a component of the chain throws an exception, it is thrown immediately if the exception does not allow for fallbacks.
+     *                                 Otherwise, it is thrown only if none of the components managed to extract content and at least one threw an exception.
+     */
     @Override
     public <T> Collection<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<T> context, IntrospectionSettings settings) throws ChainComponentException {
         ChainComponentException delayedException = null;
+        Collection<Content> extracted = null;
         for (ContentAccessor chainElement : chain) {
             if (chainElement.accepts(current, holdingField, settings)) {
                 try {
-                    return chainElement.extract(current, holdingField, context, settings);
+                    extracted = chainElement.extract(current, holdingField, context, settings);
+                    break;
                 } catch (ChainComponentException e) {
-                    // TODO check if a cause is a TracedException
                     if (!e.isAllowFallback()) {
                         throw e;
                     }
@@ -43,12 +57,15 @@ public class AccessorsChain implements ContentAccessor {
                 }
             }
         }
-        if (delayedException != null) {
-            // TODO consider merging exceptions if multiple chain elements threw exceptions
-            // If we had a delayed exception, rethrow it
-            throw delayedException;
+        if (extracted == null) { // If nothing is found
+            if (delayedException != null) {
+                // TODO consider merging exceptions if multiple chain elements threw exceptions
+                // If we had a delayed exception, rethrow it
+                throw delayedException;
+            }
+            // TODO check if any exception was thrown and if so, rethrow it
+            return Collections.emptyList();
         }
-        // TODO check if any exception was thrown and if so, rethrow it
-        return Collections.emptyList();
+        return extracted;
     }
 }

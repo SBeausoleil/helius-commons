@@ -10,6 +10,9 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Stack;
 
+/**
+ * Exception that collects the trace of fields traversed to get to the exception point.
+ */
 @Internal
 public class TracedAccessException extends Exception {
     @Serial
@@ -31,6 +34,10 @@ public class TracedAccessException extends Exception {
         super(cause);
     }
 
+    /**
+     * Add a field to the trace.
+     * @param step the field that was traversed. If NULL, nothing is done.
+     */
     public void addStep(@Nullable Field step) {
         if (step != null)
             trace.push(step);
@@ -57,11 +64,22 @@ public class TracedAccessException extends Exception {
         return sb.toString();
     }
 
+    /**
+     * The object at the root of the search.
+     * <p>
+     *     Is null if the unwinding is not finished.
+     * </p>
+     * @return the root of the search that failed.
+     */
     @Nullable
     public Object getRoot() {
         return root;
     }
 
+    /**
+     * The object at the root of the search.
+     * @param root the object at the root of the search.
+     */
     public void setRoot(@Nullable Object root) {
         this.root = root;
     }

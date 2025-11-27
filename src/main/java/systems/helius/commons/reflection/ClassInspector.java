@@ -129,6 +129,21 @@ public sealed class ClassInspector permits CachingClassInspector {
         return targetType.isAssignableFrom(value.getClass());
     }
 
+    /**
+     * Checks if the given class is one for a wrapper of a primitive type.
+     * @param clazz the type
+     * @return true if it is one of the followings:
+     * <ul>
+     *     <li>Boolean</li>
+     *     <li>Byte</li>
+     *     <li>Short</li>
+     *     <li>Integer</li>
+     *     <li>Long</li>
+     *     <li>Float</li>
+     *     <li>Double</li>
+     *     <li>Character</li>
+     * </ul>
+     */
     public static boolean isPrimitiveWrapper(Class<?> clazz) {
         return PRIMITIVE_WRAPPERS.containsKey(clazz);
     }

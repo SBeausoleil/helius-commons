@@ -22,16 +22,15 @@ public class SmartProperties extends Properties {
 
     /**
      * Attempt to get a boolean from the properties.
-     *<p>
+     * <p>
      *     The following patterns are supported:
-     *     <ul>
-     *         <li>true | false</li>
-     *         <li>yes | no</li>
-     *         <li>on | off</li>
-     *         <li>1 | 0</li>
-     *     </ul>
-     *</p>
-     *
+     * </p>
+     * <ul>
+     *     <li>true | false</li>
+     *     <li>yes | no</li>
+     *     <li>on | off</li>
+     *     <li>1 | 0</li>
+     * </ul>
      * @param key the property key to read
      * @param defaultValue the value to return if no property is mapped to the key.
      * @return the boolean value.

@@ -85,6 +85,7 @@ public class BeanIntrospector {
             return;
         context.visited().add(current);
 
+        // Check if the current object is what we are looking for
         if (ClassInspector.evaluateTypingMatch(context.targetType(), current, (holdingField != null ? holdingField.getType() : null))) {
             //noinspection unchecked covered by the static isAssignableFrom
             context.found().add((T) current);
