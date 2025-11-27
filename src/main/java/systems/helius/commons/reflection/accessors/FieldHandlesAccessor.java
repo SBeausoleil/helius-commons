@@ -8,8 +8,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.stream.Stream;
 
+/**
+ * Accessor that uses Fields and VarHandles to access fields of classes directly.
+ */
 public class FieldHandlesAccessor implements ContentAccessor {
     private final ClassInspector classInspector;
     private final LookupManager lookupManager;
@@ -36,10 +38,10 @@ public class FieldHandlesAccessor implements ContentAccessor {
             if (classLookup.lookupClass() != entry.getKey()) {
                 // This grants access to the private fields within superclasses
                 try {
-                    classLookup = lookupManager.getPrivilegedLookup(entry.getKey(), classLookup, context.rootLookup(), true);
+                    classLookup = lookupManager.getPrivilegedLookup(entry.getKey(), context.rootLookup(), classLookup);
                 } catch (LoookupAcquisitionException e) {
                     if (!settings.useSafeAccessCheck()) {
-                        throw new ChainComponentException(e.getMessage(), e, true);
+                        throw new ChainComponentException(e, true);
                     }
                     continue;
                 }
@@ -67,9 +69,8 @@ public class FieldHandlesAccessor implements ContentAccessor {
     }
 
     private MethodHandles.Lookup getClassLookup(Object current, IntrospectionContext<?> context) throws ChainComponentException {
-        MethodHandles.Lookup fakeParent = MethodHandles.lookup(); // TODO TEMPORARY ONLY FOR TESTS TO REPLACE THE PARENT LOOKUP
         try {
-            return lookupManager.getPrivilegedLookup(current.getClass(), context.rootLookup(), fakeParent/*parent*/, false);
+            return lookupManager.getPrivilegedLookup(current.getClass(), context.rootLookup(),  MethodHandles.lookup());
         } catch (LoookupAcquisitionException e) {
             throw new ChainComponentException(e, true);
         }

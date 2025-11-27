@@ -96,7 +96,7 @@ public sealed class ClassInspector permits CachingClassInspector {
             if (context.lookupClass() != fieldsByClass.getKey()) {
                 // This grants access to the private fields within superclasses
                 try {
-                    privilegedLookup = lookupManager.getPrivilegedLookup(fieldsByClass.getKey(), privilegedLookup, context, true);
+                    privilegedLookup = lookupManager.getPrivilegedLookup(fieldsByClass.getKey(), context, privilegedLookup);
                 } catch (LoookupAcquisitionException e) {
                     throw new IllegalAccessException("Couldn't get private access to the class: " + fieldsByClass.getKey().getCanonicalName() + ". " + e.getMessage());
                 }

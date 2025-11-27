@@ -1,40 +1,44 @@
 package systems.helius.commons.reflection;
 
+import jakarta.annotation.Nullable;
 import systems.helius.commons.annotations.Internal;
 import systems.helius.commons.exceptions.LoookupAcquisitionException;
 
 import java.lang.invoke.MethodHandles;
+import java.util.LinkedList;
+import java.util.List;
 
 public class LookupManager {
     /**
      * Attempts to get a privileged (private-level access) lookup on a target class.
      *
      * @param target        the class on which a privileged lookup is desired.
-     * @param rootContext   the original context of the request. Will be used as a backup if the parent may not grant privileged-access.
-     * @param parent        the lookup on the class that owns the field where the target is the type.
-     * @param forSuperclass indicates that the lookup is being made for the superclass of the parent.
+     * @param caller        the lookup of the caller or, ideally, of the target class itself.
+     * @param fallbacks     (optional) fallback lookups that may be tried, such as the original context of the request.
+     *                      Will be used as a backup if the caller may not grant privileged-access.
      * @return a privileged lookup.
      */
-    @Internal // TODO refactor and restrict access to module
-    public MethodHandles.Lookup getPrivilegedLookup(Class<?> target, MethodHandles.Lookup rootContext, MethodHandles.Lookup parent, boolean forSuperclass) throws LoookupAcquisitionException {
-        MethodHandles.Lookup acquiredAccess;
-        try { // Check if the direct parent has access
-            acquiredAccess = MethodHandles.privateLookupIn(target, parent);
-        } catch (IllegalAccessException | SecurityException parentException) {
-            try { // Fallback on the root context: perhaps the parent is part of a library who is not allowed such privileges
-                acquiredAccess = MethodHandles.privateLookupIn(target, rootContext);
-            } catch (IllegalAccessException | SecurityException rootContextException) {
-                try { // Last resort: maybe this library is afforded the privilege by the type's module.
-                    acquiredAccess = MethodHandles.privateLookupIn(target, MethodHandles.lookup());
-                } catch (IllegalAccessException | SecurityException libraryLookupException) {
-                    throw new LoookupAcquisitionException("Couldn't get privileged lookup access into: " + target.getCanonicalName()
-                            + (forSuperclass ? "\n Accessing superclass of: " + parent.lookupClass()
-                            : ".\n Parent class: " + parentException.getMessage())
-                            + ",\n root context: " + rootContextException.getMessage()
-                            + ",\n library context: " + libraryLookupException.getMessage());
-                }
+    @Internal // TODO restrict access to module
+    public MethodHandles.Lookup getPrivilegedLookup(Class<?> target, MethodHandles.Lookup caller, MethodHandles.Lookup... fallbacks) throws LoookupAcquisitionException {
+        List<String> errorMessages;
+        IllegalAccessException originalException;
+        try {
+            return MethodHandles.privateLookupIn(target, caller);
+        } catch (IllegalAccessException e) {
+            errorMessages = new LinkedList<>();
+            errorMessages.add(e.getMessage());
+            originalException = e;
+        }
+
+        for (var fallback : fallbacks) {
+            try {
+                return MethodHandles.privateLookupIn(target, fallback);
+            } catch (IllegalAccessException e) {
+                errorMessages.add(e.getMessage());
             }
         }
-        return acquiredAccess;
+
+        String message = "All access has been denied: " + String.join(", ", errorMessages);
+        throw new LoookupAcquisitionException(message, originalException);
     }
 }
