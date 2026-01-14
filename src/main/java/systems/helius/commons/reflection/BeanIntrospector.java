@@ -1,12 +1,12 @@
 package systems.helius.commons.reflection;
 
 import jakarta.annotation.Nullable;
-import systems.helius.commons.collections.BridgingIterator;
+import systems.helius.commons.exceptions.IntrospectionException;
 
-import java.lang.invoke.VarHandle;
-import java.lang.reflect.Array;
+import systems.helius.commons.reflection.accessors.AccessorsChain;
+import systems.helius.commons.reflection.accessors.Content;
+
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
 import static java.lang.invoke.MethodHandles.Lookup;
@@ -59,34 +59,33 @@ public class BeanIntrospector {
      * @param root seek into
      * @param context the context of the caller. Should always be MethodHandles.lookup();
      * @return every instance found of the given type
-     * @throws IllegalAccessException if any access right issue is found.
+     * @throws IntrospectionException if any fatal access issues are encountered during the introspection.
      * @see <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/IdentityHashMap.html">Java 17 API: IdentitHashMap</a>
      */
-    public <T> Set<T> seek(Class<T> targetType, Object root, Lookup context) throws IllegalAccessException {
+    public <T> Set<T> seek(Class<T> targetType, Object root, Lookup context) throws IntrospectionException {
         Set<T> found = Collections.newSetFromMap(new IdentityHashMap<>());
         Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         try {
-            depthFirstSearch(root, null, context, 0, new IntrospectionContext<>(targetType, context, found, visited),
+            depthFirstSearch(root, null, 0, new IntrospectionContext<>(targetType, context, found, visited, new AccessorsChain(classInspector, new LookupManager())),
                     defaults);
         } catch (TracedAccessException e) {
             e.setRoot(root);
-            throw e.toIllegalAccessException();
+            throw new IntrospectionException(e);
         }
         return found;
     }
 
     protected <T> void depthFirstSearch(Object current,
                                         @Nullable Field holdingField,
-                                        Lookup parent,
                                         int depth,
                                         IntrospectionContext<T> context,
                                         IntrospectionSettings settings) throws TracedAccessException {
+        // Checks
         if (current == null || depth >= settings.getMaxDepth() || context.visited().contains(current))
             return;
         context.visited().add(current);
-        depth++;
 
-
+        // Check if the current object is what we are looking for
         if (ClassInspector.evaluateTypingMatch(context.targetType(), current, (holdingField != null ? holdingField.getType() : null))) {
             //noinspection unchecked covered by the static isAssignableFrom
             context.found().add((T) current);
@@ -96,114 +95,30 @@ public class BeanIntrospector {
 
         if (ClassInspector.isPrimitiveWrapper(current.getClass())) // Also catches primitives due to the autoboxing
             return;
+        // End of checks
 
-        if ((current instanceof Iterable<?> && !settings.isDetailledIterableCheck())
-                || (current instanceof Map<?, ?> && !settings.isDetailledMapCheck())
-            || current.getClass().isArray()) {
-            iterativeScenario(current, holdingField, parent, depth, context, settings);
-        } else {
-            try {
-                Lookup lookup = classInspector.getPrivilegedLookup(current.getClass(), context.rootLookup(), parent, false);
-                detailedInspectionScenario(current, lookup, holdingField, depth, context, settings);
-            } catch (TracedAccessException e) {
-                if (!settings.useSafeAccessCheck()) {
-                    e.addStep(holdingField);
-                    throw e;
-                }
-            }
-        }
+        descendInto(current, holdingField, depth, context, settings);
     }
 
-    protected <T> void detailedInspectionScenario(Object current,
-                                                  Lookup currentPrivilegedLookup,
-                                                  Field holdingField,
-                                                  int depth,
-                                                  IntrospectionContext<T> context,
-                                                  IntrospectionSettings settings)
-            throws TracedAccessException {
-
-        // Important, because this way we can partially skip unreachable locations if needed instead of being all or nothing
-        Map<Class<?>, List<Field>> fields = classInspector.getAllFieldsHierarchical(current.getClass());
-        if (fields.isEmpty()) return;
-
-        for (Map.Entry<Class<?>, List<Field>> entry : fields.entrySet()) {
-            if (currentPrivilegedLookup.lookupClass() != entry.getKey()) {
-                // This grants access to the private fields within superclasses
-                try {
-                    currentPrivilegedLookup = classInspector.getPrivilegedLookup(entry.getKey(), currentPrivilegedLookup, context.rootLookup(), true);
-                } catch (TracedAccessException e) {
-                    if (!settings.useSafeAccessCheck()) {
-                        e.addStep(holdingField);
-                        throw e;
-                    }
-                    continue;
-                }
-            }
-            for (Field field : entry.getValue()) {
-                if (Modifier.isStatic(field.getModifiers()))
-                    continue;
-
-                Object value;
-                try {
-                    value = currentPrivilegedLookup.unreflectVarHandle(field).get(current);
-                } catch (IllegalAccessException e) {
-                    // Shouldn't happen as we are supposed to have a private level of access into the class...
-                    if (!settings.isIgnoreIllegalAccessError()) {
-                        throw new TracedAccessException("Couldn't read the value of the field: " + field
-                                + ". This should be impossible. " +
-                                "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues" +
-                                " describing how this happened.", e);
-                    }
-                    continue;
-                }
-                if (value != null) {
-                    try {
-                        depthFirstSearch(value, field, currentPrivilegedLookup, depth + 1, context, settings);
-                    } catch (TracedAccessException e) {
-                        e.addStep(field);
-                        throw e;
-                    }
-                }
+    private <T> void descendInto(Object current, Field holdingField, int depth, IntrospectionContext<T> context, IntrospectionSettings settings) throws TracedAccessException {
+        Collection<Content> content = null;
+        try {
+            content = context.contentAccessor().extract(current, holdingField, context, settings);
+        } catch (Exception e) {
+            if (!settings.useSafeAccessCheck()) {
+                var traced = new TracedAccessException(e);
+                traced.addStep(holdingField);
+                throw traced;
             }
         }
-    }
-
-
-    /*
-    Suppressing the warnings is required, as we are intentionally polluting the heap in the map scenario.
-    Our pollution here is safe, as the polluted memory of the raw BridgingIterator never leaves the context
-    of this method and we never do any operation within this method that operates on assumptions of the typing
-    of the iterator since itself announces itself as a wildcard iterator.
-     */
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private <T> void iterativeScenario(Object value,
-                                       Field holdingField,
-                                       Lookup lookup,
-                                       int depth,
-                                       IntrospectionContext<T> context,
-                                       IntrospectionSettings settings)
-            throws TracedAccessException {
-        Iterator<?> it;
-        if (value.getClass().isArray()) {
-            if (value.getClass().getComponentType().isPrimitive()) {
-                final int LENGTH = Array.getLength(value);
-                ArrayList<Object> list = new ArrayList<>(LENGTH);
-                for (int i = 0; i < LENGTH; i++)
-                    list.add(Array.get(value, i));
-                it = list.iterator();
-                holdingField = SyntheticPrimitiveFields.getSyntheticPrimitiveField(value.getClass().getComponentType());
-            } else {
-                it = Arrays.asList((Object[]) value).iterator();
-            }
-        } else if (value instanceof Iterable<?> i) {
-            it = i.iterator();
-        } else if (value instanceof Map<?, ?> map) {
-            it = new BridgingIterator(map.keySet(), map.values());
-        } else {
-            throw new UnsupportedOperationException("Type " + value.getClass() + " is not supported by the iterable scenario.");
+        if (content == null || content.isEmpty()) {
+            return;
         }
-        while (it.hasNext()) {
-            depthFirstSearch(it.next(), holdingField, lookup, depth + 1, context, settings);
+
+        final int currentDepth = depth + 1;
+        for (Content c : content) {
+            if (c == null) continue;
+            depthFirstSearch(c.value(), c.holdingField(), currentDepth, context, settings);
         }
     }
 }

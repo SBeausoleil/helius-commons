@@ -1,0 +1,19 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+
+interface ContentAccessor {
+  + accepts(current: Object, holdingField[0..1]: Field, settings: IntrospectionSettings): boolean
+  + extract(current: Object, holdingField[0..1]: Field, context: IntrospectionContext, settings: IntrospectionSettings): Stream<Content>
+}
+
+class Content {
+  + value: Object
+  + holdingField: Field
+}
+
+ContentAccessor ..> Content : Provides
+
+class
+
+@enduml

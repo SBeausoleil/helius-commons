@@ -1,10 +1,13 @@
 package systems.helius.commons.reflection;
 
+import systems.helius.commons.annotations.Internal;
+
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-final class SyntheticPrimitiveFields {
+@Internal
+public final class SyntheticPrimitiveFields {
     private static final Map<Class<?>, Field> TYPES_TO_FIELDS;
     static {
         TYPES_TO_FIELDS = new LinkedHashMap<>();
