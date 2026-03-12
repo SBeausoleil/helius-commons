@@ -55,9 +55,9 @@ public final class TimeUtils {
      *
      * @param a the first temporal
      * @param b the second temporal
-     * @return true if both are equals up to their smallest shared temporal unit.
+     * @return true if both are equals up to their smallest shared temporal unit. True if both temporals are null. False if only one is null.
      */
-    public static boolean isRoughlyEqual(TemporalAccessor a, TemporalAccessor b) {
+    public static boolean isRoughlyEqual(@Nullable TemporalAccessor a, @Nullable TemporalAccessor b) {
         return TimeUtils.isRoughlyEqual(a, b, null);
     }
 
@@ -98,9 +98,16 @@ public final class TimeUtils {
      * @param a                 the first temporal
      * @param b                 the second temporal
      * @param ignoreSmallerThan (optional) all temporal units smaller than this unit (exclusive) are ignored for the comparison, e.g. if this is ChronoUnit.SECONDS, all units smaller than seconds are ignored
-     * @return true if both are equals up to their smallest shared temporal unit.
+     * @return true if both are equals up to their smallest shared temporal unit. True if both temporals are null. False if only one is null.
      */
-    public static boolean isRoughlyEqual(TemporalAccessor a, TemporalAccessor b, @Nullable ChronoField ignoreSmallerThan) {
+    public static boolean isRoughlyEqual(@Nullable TemporalAccessor a, @Nullable TemporalAccessor b, @Nullable ChronoField ignoreSmallerThan) {
+        if (a == b) {
+            return true;
+        }
+        if (a == null || b == null) {
+            return false;
+        }
+
         boolean equalUpToNow = false;
         for (ChronoField chronoField : CHECKED_FIELDS) {
             if (ignoreSmallerThan != null && chronoField.compareTo(ignoreSmallerThan) < 0) {

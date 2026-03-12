@@ -122,20 +122,6 @@ class TimeUtilsTest {
     }
 
     @Test
-    void GivenNullFirstTemporal_WhenCompared_ThenThrowsNullPointerException() {
-        LocalDateTime b = LocalDateTime.of(2026, 3, 12, 2, 2, 48, 0);
-
-        assertThrows(NullPointerException.class, () -> TimeUtils.isRoughlyEqual(null, b));
-    }
-
-    @Test
-    void GivenNullSecondTemporal_WhenCompared_ThenThrowsNullPointerException() {
-        LocalDateTime a = LocalDateTime.of(2026, 3, 12, 2, 2, 48, 0);
-
-        assertThrows(NullPointerException.class, () -> TimeUtils.isRoughlyEqual(a, null));
-    }
-
-    @Test
     void GivenMidnightLocalTime_WhenPrecisionIsHourOfDay_ThenReturnsTrue() {
         LocalTime temporal = LocalTime.MIDNIGHT;
 
@@ -187,5 +173,16 @@ class TimeUtilsTest {
         boolean result = TimeUtils.isPrecisionTruncatedAt(temporal, ChronoField.NANO_OF_SECOND);
 
         assertFalse(result);
+    }
+
+    @Test
+    void GivenBothInputsNull_WhenCompared_ThenTrue() {
+        assertTrue(TimeUtils.isRoughlyEqual(null, null));
+    }
+
+    @Test
+    void GivenOneNullInputAndOtherValid_WhenCompared_ThenFalse() {
+        assertFalse(TimeUtils.isRoughlyEqual(null, LocalDate.now()));
+        assertFalse(TimeUtils.isRoughlyEqual(LocalDate.now(), null));
     }
 }
