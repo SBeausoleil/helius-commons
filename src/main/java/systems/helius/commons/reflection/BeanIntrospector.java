@@ -1,6 +1,7 @@
 package systems.helius.commons.reflection;
 
 import jakarta.annotation.Nullable;
+import systems.helius.commons.annotations.Unstable;
 import systems.helius.commons.exceptions.IntrospectionException;
 
 import systems.helius.commons.reflection.accessors.AccessorsChain;
@@ -33,24 +34,6 @@ public class BeanIntrospector {
         this.defaults = Objects.requireNonNullElseGet(defaults, IntrospectionSettings::new);
         this.classInspector = Objects.requireNonNullElseGet(classInspector, CachingClassInspector::new);
     }
-
-    /*
-    Introspection algorithm:
-    - 0: Add current object to "visited" set
-    - 1: get all fields of current object
-    - 2: for each field:
-        - 2.1: Check if there is a special way to handle it (full control)
-        - 2.2: Attempt to make it accessible:
-            - 2.2.1: If that fails: look for a getter of said field
-            - 2.2.2: If fails again: if SKIP_INACCESSIBLE: go to next iteration
-            - 2.2.3: Else rethrow exception
-        - 2.4: Get the value (if the value is NULL, go to next iteration)
-        - 2.5: If the value is of the desired type:
-            - 2.5.1: Add it to the sought list
-            - 2.5.2: If NO_TARGET_INTROSPECTION: go to next iteration
-        - 2.6: Enter the value for introspection
-    - 3: Once no more fields: return (go back one level)
-     */
 
     /**
      * Seek within the root and all children for instances of a given type.

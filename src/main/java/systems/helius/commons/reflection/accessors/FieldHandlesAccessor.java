@@ -12,7 +12,7 @@ import java.util.*;
 /**
  * Accessor that uses Fields and VarHandles to access fields of classes directly.
  */
-public class FieldHandlesAccessor implements ContentAccessor {
+public class FieldHandlesAccessor implements ContentAccessor, ClassInspectorAware<FieldHandlesAccessor> {
     private final ClassInspector classInspector;
     private final LookupManager lookupManager;
 
@@ -74,5 +74,10 @@ public class FieldHandlesAccessor implements ContentAccessor {
         } catch (LoookupAcquisitionException e) {
             throw new ChainComponentException(e, true);
         }
+    }
+
+    @Override
+    public FieldHandlesAccessor replaceClassInspector(ClassInspector classInspector) {
+        return new FieldHandlesAccessor(classInspector, this.lookupManager);
     }
 }
