@@ -20,6 +20,10 @@ public class AccessorsChain implements ContentAccessor {
         }
     }
 
+    public static AccessorsChain.Builder builder(boolean withDefaults) {
+        return new AccessorsChain.Builder(withDefaults);
+    }
+
     @Override
     public boolean accepts(Object current, @Nullable Field holdingField, IntrospectionSettings settings) {
         return chain.stream().anyMatch(chainElement -> chainElement.accepts(current, holdingField, settings));
@@ -160,6 +164,15 @@ public class AccessorsChain implements ContentAccessor {
                 replaceOrAddAtEnd(IterativeMapAccessor.class, new IterativeMapAccessor());
             } else {
                 remove(IterativeMapAccessor.class);
+            }
+            return this;
+        }
+
+        public Builder iterateOverArrays(boolean iterate) {
+            if (iterate) {
+                replaceOrAddAtEnd(ArrayAccessor.class, new ArrayAccessor());
+            } else {
+                remove(ArrayAccessor.class);
             }
             return this;
         }

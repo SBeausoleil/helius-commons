@@ -1,12 +1,9 @@
 package systems.helius.commons.reflection.accessors;
 
 import jakarta.annotation.Nullable;
-import systems.helius.commons.collections.BridgingIterator;
 import systems.helius.commons.reflection.IntrospectionContext;
 import systems.helius.commons.reflection.IntrospectionSettings;
-import systems.helius.commons.reflection.SyntheticPrimitiveFields;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Stream;

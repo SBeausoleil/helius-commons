@@ -1,7 +1,6 @@
 package systems.helius.commons.reflection;
 
 import jakarta.annotation.Nullable;
-import systems.helius.commons.annotations.Unstable;
 import systems.helius.commons.exceptions.IntrospectionException;
 
 import systems.helius.commons.reflection.accessors.AccessorsChain;
@@ -49,7 +48,7 @@ public class BeanIntrospector {
         Set<T> found = Collections.newSetFromMap(new IdentityHashMap<>());
         Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         try {
-            depthFirstSearch(root, null, 0, new IntrospectionContext<>(targetType, context, found, visited, new AccessorsChain(classInspector, new LookupManager())),
+            depthFirstSearch(root, null, 0, new IntrospectionContext<>(targetType, context, found, visited, AccessorsChain.builder(true).build()),
                     defaults);
         } catch (TracedAccessException e) {
             e.setRoot(root);
