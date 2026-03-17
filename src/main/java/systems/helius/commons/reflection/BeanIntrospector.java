@@ -3,7 +3,6 @@ package systems.helius.commons.reflection;
 import jakarta.annotation.Nullable;
 import systems.helius.commons.exceptions.IntrospectionException;
 
-import systems.helius.commons.reflection.accessors.AccessorsChain;
 import systems.helius.commons.reflection.accessors.Content;
 
 import java.lang.reflect.Field;
@@ -12,25 +11,23 @@ import java.util.*;
 import static java.lang.invoke.MethodHandles.Lookup;
 
 public class BeanIntrospector {
-    protected final IntrospectionSettings defaults;
+    protected final IntrospectionSettings settings;
     protected final ClassInspector classInspector;
-
-    // IMPROVEMENT a map of fields and varhandles that are already known to resolve them?
 
     public BeanIntrospector() {
         this(null, null);
     }
 
-    public BeanIntrospector(IntrospectionSettings defaults) {
-        this(defaults, null);
+    public BeanIntrospector(IntrospectionSettings settings) {
+        this(settings, null);
     }
 
     public BeanIntrospector(ClassInspector classInspector) {
         this(null, classInspector);
     }
 
-    public BeanIntrospector(@Nullable IntrospectionSettings defaults, @Nullable ClassInspector classInspector) {
-        this.defaults = Objects.requireNonNullElseGet(defaults, IntrospectionSettings::new);
+    public BeanIntrospector(@Nullable IntrospectionSettings settings, @Nullable ClassInspector classInspector) {
+        this.settings = Objects.requireNonNullElseGet(settings, IntrospectionSettings::new);
         this.classInspector = Objects.requireNonNullElseGet(classInspector, CachingClassInspector::new);
     }
 
@@ -48,8 +45,11 @@ public class BeanIntrospector {
         Set<T> found = Collections.newSetFromMap(new IdentityHashMap<>());
         Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         try {
-            depthFirstSearch(root, null, 0, new IntrospectionContext<>(targetType, context, found, visited, AccessorsChain.builder(true).build()),
-                    defaults);
+            depthFirstSearch(root,
+                    null,
+                    0,
+                    new IntrospectionContext<>(targetType, context, found, visited, settings.getContentAccessor()),
+                    settings);
         } catch (TracedAccessException e) {
             e.setRoot(root);
             throw new IntrospectionException(e);
@@ -82,7 +82,7 @@ public class BeanIntrospector {
         descendInto(current, holdingField, depth, context, settings);
     }
 
-    private <T> void descendInto(Object current, Field holdingField, int depth, IntrospectionContext<T> context, IntrospectionSettings settings) throws TracedAccessException {
+    protected <T> void descendInto(Object current, Field holdingField, int depth, IntrospectionContext<T> context, IntrospectionSettings settings) throws TracedAccessException {
         Collection<Content> content = null;
         try {
             content = context.contentAccessor().extract(current, holdingField, context, settings);

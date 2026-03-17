@@ -20,6 +20,17 @@ public class AccessorsChain implements ContentAccessor {
         }
     }
 
+    /**
+     * Construct a new accessors chain builder.
+     *
+     * @param withDefaults if true, add the following accessors:
+     *                     <ol>
+     *                     <li>{@link ArrayAccessor} checks each element of an array</li>
+     *                     <li>{@link IterativeAccessor} checks each element of Iterables and does not inspect its fields.</li>
+     *                     <li>{@link IterativeMapAccessor} check the key and value of each entry of Maps and does not check its fields.</li>
+     *                     <li>{@link FieldHandlesAccessor} as the last resort accessor (checks all fields of all objects)</li>
+     *                     </ol>
+     */
     public static AccessorsChain.Builder builder(boolean withDefaults) {
         return new AccessorsChain.Builder(withDefaults);
     }
@@ -60,11 +71,9 @@ public class AccessorsChain implements ContentAccessor {
         }
         if (extracted == null) { // If nothing is found
             if (delayedException != null) {
-                // TODO consider merging exceptions if multiple chain elements threw exceptions
                 // If we had a delayed exception, rethrow it
                 throw delayedException;
             }
-            // TODO check if any exception was thrown and if so, rethrow it
             return Collections.emptyList();
         }
         return extracted;
@@ -88,10 +97,10 @@ public class AccessorsChain implements ContentAccessor {
          *
          * @param withDefaults if true, add the following accessors:
          *                     <ol>
-         *                     <li>{@link ArrayAccessor}</li>
-         *                     <li>{@link IterativeAccessor}</li>
-         *                     <li>{@link IterativeMapAccessor}</li>
-         *                     <li>{@link FieldHandlesAccessor} as the last resort accessor</li>
+         *                     <li>{@link ArrayAccessor} checks each element of an array</li>
+         *                     <li>{@link IterativeAccessor} checks each element of Iterables and does not inspect its fields.</li>
+         *                     <li>{@link IterativeMapAccessor} check the key and value of each entry of Maps and does not check its fields.</li>
+         *                     <li>{@link FieldHandlesAccessor} as the last resort accessor (checks all fields of all objects)</li>
          *                     </ol>
          */
         public Builder(boolean withDefaults) {

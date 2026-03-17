@@ -57,11 +57,13 @@ public class FieldHandlesAccessor implements ContentAccessor, ClassInspectorAwar
                         result.add(new Content(value, field));
                     }
                 } catch (IllegalAccessException e) {
-                    var traced = new TracedAccessException("Couldn't read the value of the field: " + field
-                            + ". This should be impossible. " +
-                            "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues" +
-                            " describing how this happened.", e);
-                    throw new ChainComponentException(traced, true);
+                    if (!settings.useSafeAccessCheck()) {
+                        var traced = new TracedAccessException("Couldn't read the value of the field: " + field
+                                + ". This should be impossible. " +
+                                "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues" +
+                                " describing how this happened.", e);
+                        throw new ChainComponentException(traced, true);
+                    }
                 }
             }
         }
