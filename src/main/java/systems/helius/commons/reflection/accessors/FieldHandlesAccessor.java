@@ -22,7 +22,7 @@ public class FieldHandlesAccessor implements ContentAccessor, ClassInspectorAwar
     }
 
     @Override
-    public boolean accepts(Object current, @Nullable Field holdingField, IntrospectionSettings settings) {
+    public boolean accepts(Class<?> current, @Nullable Field holdingField) {
         return true;
     }
 

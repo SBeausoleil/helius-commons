@@ -29,9 +29,14 @@ public class BridgingIterator<T> implements Iterator<T> {
     @Override
     public boolean hasNext() {
         if (currentSourceIt == null || !currentSourceIt.hasNext()) {
-            Optional<Iterator<T>> nextIt = nextSegment();
-            if (nextIt.isPresent()) {
-                currentSourceIt = nextIt.get();
+            Iterator<T> nextIt;
+            // Required in case of empty segment
+            do {
+                nextIt = nextSegment();
+            } while (nextIt != null && !nextIt.hasNext());
+
+            if (nextIt != null) {
+                currentSourceIt = nextIt;
             } else {
                 return false;
             }
@@ -39,18 +44,21 @@ public class BridgingIterator<T> implements Iterator<T> {
         return currentSourceIt.hasNext();
     }
 
-    protected Optional<Iterator<T>> nextSegment() {
+    protected @Nullable Iterator<T> nextSegment() {
         previousSourceIt = currentSourceIt;
         if (index < sources.length) {
-            return Optional.of(sources[index++].iterator());
+            return sources[index++].iterator();
         }
-        return Optional.empty();
+        return null;
     }
 
     @Override
     public T next() {
         if (currentSourceIt == null || !currentSourceIt.hasNext()) {
-            currentSourceIt = nextSegment().orElseThrow(NoSuchElementException::new);
+            currentSourceIt = nextSegment();
+            if (currentSourceIt == null) {
+                throw new NoSuchElementException();
+            }
         } else {
             previousSourceIt = null;
         }

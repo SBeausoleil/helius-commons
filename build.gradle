@@ -27,13 +27,13 @@ dependencies {
     testImplementation platform("org.junit:junit-bom:5.10.0")
     testImplementation "org.junit.jupiter:junit-jupiter"
 
-    testFixturesApi group: "io.github.sbeausoleil", name: "factorium", version: "2.1.0"
-    testFixturesImplementation group: "jakarta.annotation", name: "jakarta.annotation-api", version: "3.0.0"
-    testFixturesCompileOnly 'org.projectlombok:lombok:1.18.36'
-    testFixturesAnnotationProcessor 'org.projectlombok:lombok:1.18.36'
+    testFixturesApi "io.github.sbeausoleil:factorium:2.1.0"
+    testFixturesImplementation "jakarta.annotation:jakarta.annotation-api:3.0.0"
+    testFixturesCompileOnly "org.projectlombok:lombok:1.18.36"
+    testFixturesAnnotationProcessor "org.projectlombok:lombok:1.18.36"
 
-    jmhImplementation group: 'org.openjdk.jmh', name: 'jmh-core', version: '1.37'
-    jmhAnnotationProcessor  group: 'org.openjdk.jmh', name: 'jmh-generator-annprocess', version: '1.37'
+    jmhImplementation "org.openjdk.jmh:jmh-core:1.37"
+    jmhAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:1.37"
 }
 
 test {

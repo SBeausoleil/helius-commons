@@ -3,26 +3,24 @@ package systems.helius.commons.reflection.accessors;
 import jakarta.annotation.Nullable;
 import systems.helius.commons.reflection.IntrospectionContext;
 import systems.helius.commons.reflection.IntrospectionSettings;
-import systems.helius.commons.reflection.TracedAccessException;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.stream.Stream;
 
 /**
  * Provides access to the content of an Object.
+ * When a ContentAccessor accepts a type and field combo, no other ContentAccessors will be queried for it.
  */
 public interface ContentAccessor {
     /**
      * Checks if this accessor accepts the current value.
      *
-     * @param current      the current value to access the innards of.
+     * @param current      the class of the current value to access the innards of.
      * @param holdingField the field that contained the current value.
      *                     Null when current is the root of the search.
-     * @param settings
-     * @return the values within the object.
+     * @return true if this accessor handles the current class for the given field, false otherwise.
      */
-    boolean accepts(Object current, @Nullable Field holdingField, IntrospectionSettings settings);
+    boolean accepts(Class<?> current, @Nullable Field holdingField);
 
     /**
      * Extract the values present within the current object.

@@ -3,8 +3,6 @@ package systems.helius.commons.collections;
 import org.junit.jupiter.api.Test;
 import systems.helius.commons.types.Foo;
 import systems.helius.commons.types.FooGenerator;
-import systems.helius.commons.types.NumberWrapper;
-import systems.helius.commons.types.NumberWrapperGenerator;
 
 import java.util.*;
 
@@ -13,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class BridgingIteratorTest {
 
     FooGenerator fooGenerator = new FooGenerator();
-    NumberWrapperGenerator numberGenerator = new NumberWrapperGenerator();
 
     @Test
     void GivenMultipleSources_WhenNext_ThenReadAll() {
@@ -46,10 +43,10 @@ class BridgingIteratorTest {
 
     @Test
     void GivenThreeSources_WhenRemoveLastOfSecondSource_ThenRemoveLastOfSecondSource() {
-        List<NumberWrapper> firstList = numberGenerator.generate(2);
-        LinkedList<NumberWrapper> secondList = new LinkedList<>(numberGenerator.generate(5));
-        List<NumberWrapper> thirdList = numberGenerator.generate(3);
-        NumberWrapper target = secondList.getLast();
+        List<Foo> firstList = fooGenerator.generate(2);
+        LinkedList<Foo> secondList = new LinkedList<>(fooGenerator.generate(5));
+        List<Foo> thirdList = fooGenerator.generate(3);
+        Foo target = secondList.getLast();
 
         var it = new BridgingIterator<>(firstList, secondList, thirdList);
         IteratorUtils.drainUntil(it, v -> v == target);
@@ -58,13 +55,16 @@ class BridgingIteratorTest {
         assertFalse(secondList.contains(target));
     }
 
+    /**
+     * Guarantees the expected behavior of Iterator that when {@link Iterator#remove()} is called,
+     * the previous returned value is removed even if the internal active iterator has changed.
+     */
     @Test
     void GivenMultipleSources_WhenRemoveAfterChangingActiveSubIteratorWithoutReadingTheNewOne_ThenRemoveLastOfPreviousIterator() {
-        List<NumberWrapper> firstList = numberGenerator.generate(2);
-        LinkedList<NumberWrapper> secondList = new LinkedList<>(numberGenerator.generate(5));
-        List<NumberWrapper> thirdList = numberGenerator.generate(3);
-        NumberWrapper target = secondList.getLast();
-        target.setValue(950);
+        List<Foo> firstList = fooGenerator.generate(2);
+        LinkedList<Foo> secondList = new LinkedList<>(fooGenerator.generate(5));
+        List<Foo> thirdList = fooGenerator.generate(3);
+        Foo target = secondList.getLast();
 
         var it = new BridgingIterator<>(firstList, secondList, thirdList);
         IteratorUtils.drainUntil(it, v -> v == target);
@@ -75,5 +75,19 @@ class BridgingIteratorTest {
         it.remove();
 
         assertFalse(secondList.contains(target));
+    }
+
+    @Test
+    void GivenEmptyMiddleSource_WhenNext_ThenSkipSilently() {
+        List<Foo> firstList = fooGenerator.generate(1);
+        List<Foo> secondList = Collections.emptyList();
+        List<Foo> thirdList = fooGenerator.generate(3);
+
+        var it = new BridgingIterator<>(firstList, secondList, thirdList);
+        List<Foo> content = IteratorUtils.drain(it);
+
+        assertEquals(firstList.size() + thirdList.size(), content.size());
+        assertTrue(content.containsAll(firstList));
+        assertTrue(content.containsAll(thirdList));
     }
 }
