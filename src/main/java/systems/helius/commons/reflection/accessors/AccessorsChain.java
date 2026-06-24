@@ -36,8 +36,8 @@ public class AccessorsChain implements ContentAccessor {
     }
 
     @Override
-    public boolean accepts(Object current, @Nullable Field holdingField, IntrospectionSettings settings) {
-        return chain.stream().anyMatch(chainElement -> chainElement.accepts(current, holdingField, settings));
+    public boolean accepts(Class<?> current, @Nullable Field holdingField) {
+        return chain.stream().anyMatch(chainElement -> chainElement.accepts(current, holdingField));
     }
 
     /**
@@ -57,7 +57,7 @@ public class AccessorsChain implements ContentAccessor {
         ChainComponentException delayedException = null;
         Collection<Content> extracted = null;
         for (ContentAccessor chainElement : chain) {
-            if (chainElement.accepts(current, holdingField, settings)) {
+            if (chainElement.accepts(current.getClass(), holdingField)) {
                 try {
                     extracted = chainElement.extract(current, holdingField, context, settings);
                     break;

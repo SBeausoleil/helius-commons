@@ -11,8 +11,8 @@ import java.util.stream.StreamSupport;
 
 public class IterativeAccessor implements ContentAccessor {
     @Override
-    public boolean accepts(Object current, @Nullable Field holdingField, IntrospectionSettings settings) {
-        return current instanceof Iterable<?>;
+    public boolean accepts(Class<?> current, @Nullable Field holdingField) {
+        return Iterable.class.isAssignableFrom(current);
     }
 
     @Override

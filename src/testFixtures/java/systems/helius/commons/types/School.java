@@ -2,8 +2,10 @@ package systems.helius.commons.types;
 
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -16,6 +18,9 @@ public class School {
 
     private Map<Integer, StudentProfile> students;
     private Set<ComplexHuman> teachers;
+    private List<Classroom> classrooms;
+    private Map<String, Department> departments;
+    private int[] semesterYears;
 
     public School(String name, String address) {
         this(ThreadLocalRandom.current().nextInt(), name, address);
@@ -28,6 +33,9 @@ public class School {
 
         this.students = new HashMap<>();
         this.teachers = new LinkedHashSet<>();
+        this.classrooms = new ArrayList<>();
+        this.departments = new HashMap<>();
+        this.semesterYears = new int[0];
     }
 
     public StudentProfile registerStudent(ComplexHuman student) {

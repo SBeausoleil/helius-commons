@@ -10,7 +10,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -18,8 +17,8 @@ import java.util.stream.Stream;
  */
 public class ArrayAccessor implements ContentAccessor {
     @Override
-    public boolean accepts(Object current, @Nullable Field holdingField, IntrospectionSettings settings) {
-        return current.getClass().isArray();
+    public boolean accepts(Class<?> current, @Nullable Field holdingField) {
+        return current.isArray();
     }
 
     @Override
