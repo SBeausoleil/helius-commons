@@ -14,10 +14,11 @@ import java.util.List;
 
 /**
  * A {@link ContentAccessor} for {@link Course} objects that reads field values directly
- * via {@link java.lang.reflect.Field#get(Object)} (with {@code setAccessible(true)}).
+ * by accessing the {@code public} fields of {@link Course}.
  *
  * <p>This accessor is the "direct field reads" variant: it bypasses any getters and
- * accesses the backing fields of {@code Course} directly through the reflection API.</p>
+ * reads the public fields of {@code Course} without going through the reflection API
+ * at call time.</p>
  */
 public class CourseDirectFieldAccessor implements ContentAccessor {
 
@@ -29,17 +30,11 @@ public class CourseDirectFieldAccessor implements ContentAccessor {
 
     static {
         try {
-            TITLE_FIELD = Course.class.getDeclaredField("title");
-            DESCRIPTION_FIELD = Course.class.getDeclaredField("description");
-            TAGS_FIELD = Course.class.getDeclaredField("tags");
-            PREREQUISITES_FIELD = Course.class.getDeclaredField("prerequisites");
-            GRADING_CRITERIA_FIELD = Course.class.getDeclaredField("gradingCriteria");
-
-            TITLE_FIELD.setAccessible(true);
-            DESCRIPTION_FIELD.setAccessible(true);
-            TAGS_FIELD.setAccessible(true);
-            PREREQUISITES_FIELD.setAccessible(true);
-            GRADING_CRITERIA_FIELD.setAccessible(true);
+            TITLE_FIELD = Course.class.getField("title");
+            DESCRIPTION_FIELD = Course.class.getField("description");
+            TAGS_FIELD = Course.class.getField("tags");
+            PREREQUISITES_FIELD = Course.class.getField("prerequisites");
+            GRADING_CRITERIA_FIELD = Course.class.getField("gradingCriteria");
         } catch (NoSuchFieldException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -55,16 +50,13 @@ public class CourseDirectFieldAccessor implements ContentAccessor {
                                        @Nullable Field holdingField,
                                        IntrospectionContext<?> context,
                                        IntrospectionSettings settings) throws ChainComponentException {
+        Course course = (Course) current;
         List<Content> contents = new ArrayList<>(5);
-        try {
-            contents.add(new Content(TITLE_FIELD.get(current), TITLE_FIELD));
-            contents.add(new Content(DESCRIPTION_FIELD.get(current), DESCRIPTION_FIELD));
-            contents.add(new Content(TAGS_FIELD.get(current), TAGS_FIELD));
-            contents.add(new Content(PREREQUISITES_FIELD.get(current), PREREQUISITES_FIELD));
-            contents.add(new Content(GRADING_CRITERIA_FIELD.get(current), GRADING_CRITERIA_FIELD));
-        } catch (IllegalAccessException e) {
-            throw new ChainComponentException(e, false);
-        }
+        contents.add(new Content(course.title, TITLE_FIELD));
+        contents.add(new Content(course.description, DESCRIPTION_FIELD));
+        contents.add(new Content(course.tags, TAGS_FIELD));
+        contents.add(new Content(course.prerequisites, PREREQUISITES_FIELD));
+        contents.add(new Content(course.gradingCriteria, GRADING_CRITERIA_FIELD));
         return contents;
     }
 }

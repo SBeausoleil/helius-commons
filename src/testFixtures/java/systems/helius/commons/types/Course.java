@@ -10,11 +10,11 @@ import java.util.Map;
 @Data
 public class Course {
     private int courseId;
-    private String title;
-    private String description;
-    private List<String> tags;
-    private String[] prerequisites;
-    private Map<String, Integer> gradingCriteria;
+    public String title;
+    public String description;
+    public List<String> tags;
+    public String[] prerequisites;
+    public Map<String, Integer> gradingCriteria;
 
     public Course(int courseId, String title, String description) {
         this.courseId = courseId;
