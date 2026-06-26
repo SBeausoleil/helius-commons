@@ -13,16 +13,53 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 import systems.helius.commons.exceptions.IntrospectionException;
+import systems.helius.commons.types.Classroom;
+import systems.helius.commons.types.ClassroomGenerator;
+import systems.helius.commons.types.Department;
+import systems.helius.commons.types.DepartmentGenerator;
 import systems.helius.commons.types.School;
 import systems.helius.commons.types.SchoolGenerator;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Benchmarks {@link BeanIntrospector#seek(Class, Object, java.lang.invoke.MethodHandles.Lookup)}
  * on one fixed-size school graph using a cached inspector.
+ *
+ * <p>The graph is built so that each multi-value field in the object graph is represented
+ * at every one of the five canonical sizes: {@code 0} (empty), {@code 1} (single),
+ * {@code 5}, {@code 15}, and {@code 30}. This ensures all four built-in accessors
+ * ({@link systems.helius.commons.reflection.accessors.ArrayAccessor},
+ * {@link systems.helius.commons.reflection.accessors.IterativeAccessor},
+ * {@link systems.helius.commons.reflection.accessors.IterativeMapAccessor}, and
+ * {@link systems.helius.commons.reflection.accessors.FieldHandlesAccessor}) are exercised
+ * many times per traversal.</p>
+ *
+ * <h2>Multi-value field size distribution</h2>
+ * <pre>
+ * School-level
+ *   semesterYears      : int[0]           (EMPTY)
+ *   students           : 1 entry          (SINGLE)
+ *   teachers           : 5 entries
+ *   classrooms         : 5 Classrooms
+ *   departments        : 5 Departments
+ *
+ * Classroom[i] (i = 0..4, sizes = {0, 1, 5, 15, 30})
+ *   courses.size()     = SIZES[i]
+ *   facilityTags.len   = SIZES[i]
+ *   equipment.size()   = SIZES[i]
+ *
+ * Department[i] (i = 0..4, sizes = {0, 1, 5, 15, 30})
+ *   staff.size()       = SIZES[i]
+ *   focusAreas.len     = SIZES[i]
+ *   courseCatalog.size()= SIZES[i]
+ *
+ * Courses inside Classroom[2] (5 courses, j = 0..4)
+ *   tags.size()        = SIZES[j]
+ *   prerequisites.len  = SIZES[j]
+ *   gradingCriteria.sz = SIZES[j]
+ * </pre>
  */
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -32,15 +69,16 @@ import java.util.concurrent.TimeUnit;
 public class BeanIntrospectorBenchmark {
 
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
-    private static final int FIXED_STUDENT_COUNT = 25;
-    private static final int FIXED_TEACHER_COUNT = 10;
+
+    /** Five canonical sizes used to populate every multi-value field in the graph. */
+    private static final int[] SIZES = {0, 1, 5, 15, 30};
 
     /**
      * Measures one full object-graph traversal searching for all reachable strings.
      *
      * @param inspector cached introspector benchmark state
-     * @param plan generated fixed-size input graph state
-     * @param bh JMH sink to prevent dead-code elimination
+     * @param plan      generated fixed-size input graph state
+     * @param bh        JMH sink to prevent dead-code elimination
      * @throws IntrospectionException if fatal introspection access errors happen
      */
     @Benchmark
@@ -51,55 +89,63 @@ public class BeanIntrospectorBenchmark {
 
     /**
      * Provides one fixed school object graph for each benchmark trial.
+     *
+     * <p>The graph is constructed once per trial via {@link #setupSchool()} and reused
+     * across all benchmark invocations within that trial.</p>
      */
     @State(Scope.Benchmark)
     public static class ExecutionPlan {
         private final SchoolGenerator schoolGenerator = new SchoolGenerator();
+        private final ClassroomGenerator classroomGenerator = new ClassroomGenerator();
+        private final DepartmentGenerator departmentGenerator = new DepartmentGenerator();
+
         School school;
 
         /**
-         * Builds and normalizes the graph so every multi-value field has deterministic size.
+         * Builds the fixed-size graph once per trial.
+         *
+         * <p>Each multi-value field in the graph is populated at every canonical size
+         * (0, 1, 5, 15, 30) at least once across all instances of its containing class.</p>
          */
         @Setup(Level.Trial)
         public void setupSchool() {
             school = schoolGenerator.generate();
+
+            // Clear collections created by generate() so we control sizes precisely.
             school.getStudents().clear();
             school.getTeachers().clear();
+            school.getClassrooms().clear();
+            school.getDepartments().clear();
 
-            schoolGenerator.addStudents(school, FIXED_STUDENT_COUNT);
-            schoolGenerator.addTeachers(school, FIXED_TEACHER_COUNT);
+            // ── School-level multi-value fields ──────────────────────────────────────
+            school.setSemesterYears(new int[0]);         // EMPTY  (size 0)
+            schoolGenerator.addStudents(school, 1);      // SINGLE (size 1)
+            schoolGenerator.addTeachers(school, 5);      // size 5
 
-            ensureExactStudentsCount();
-            ensureExactTeachersCount();
-        }
+            // ── 5 Classrooms, one per canonical size ─────────────────────────────────
+            for (int i = 0; i < SIZES.length; i++) {
+                int size = SIZES[i];
+                Classroom classroom = classroomGenerator.generateWithSizes(size, size, size);
 
-        /**
-         * Ensures students map cardinality is exactly the fixed count.
-         */
-        private void ensureExactStudentsCount() {
-            while (school.getStudents().size() < FIXED_STUDENT_COUNT) {
-                schoolGenerator.addStudents(school, FIXED_STUDENT_COUNT - school.getStudents().size());
+                // Distribute Course-level sizes across the 5 courses in Classroom[2].
+                if (i == 2) {
+                    // Replace the uniformly-sized courses with ones covering all five sizes.
+                    classroom.getCourses().clear();
+                    for (int j = 0; j < SIZES.length; j++) {
+                        int courseSize = SIZES[j];
+                        classroom.getCourses().add(
+                                classroomGenerator.getCourseGenerator()
+                                        .generateWithSizes(courseSize, courseSize, courseSize));
+                    }
+                }
+
+                school.getClassrooms().add(classroom);
             }
 
-            Iterator<Integer> iterator = school.getStudents().keySet().iterator();
-            while (school.getStudents().size() > FIXED_STUDENT_COUNT && iterator.hasNext()) {
-                iterator.next();
-                iterator.remove();
-            }
-        }
-
-        /**
-         * Ensures teachers set cardinality is exactly the fixed count.
-         */
-        private void ensureExactTeachersCount() {
-            while (school.getTeachers().size() < FIXED_TEACHER_COUNT) {
-                schoolGenerator.addTeachers(school, FIXED_TEACHER_COUNT - school.getTeachers().size());
-            }
-
-            Iterator<?> iterator = school.getTeachers().iterator();
-            while (school.getTeachers().size() > FIXED_TEACHER_COUNT && iterator.hasNext()) {
-                iterator.next();
-                iterator.remove();
+            // ── 5 Departments, one per canonical size ────────────────────────────────
+            for (int size : SIZES) {
+                Department dept = departmentGenerator.generateWithSizes(size, size, size);
+                school.getDepartments().put(dept.getName(), dept);
             }
         }
     }
