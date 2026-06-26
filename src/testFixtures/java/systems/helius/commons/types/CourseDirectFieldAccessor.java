@@ -57,20 +57,14 @@ public class CourseDirectFieldAccessor implements ContentAccessor {
                                        IntrospectionSettings settings) throws ChainComponentException {
         List<Content> contents = new ArrayList<>(5);
         try {
-            addIfNotNull(contents, TITLE_FIELD.get(current), TITLE_FIELD);
-            addIfNotNull(contents, DESCRIPTION_FIELD.get(current), DESCRIPTION_FIELD);
-            addIfNotNull(contents, TAGS_FIELD.get(current), TAGS_FIELD);
-            addIfNotNull(contents, PREREQUISITES_FIELD.get(current), PREREQUISITES_FIELD);
-            addIfNotNull(contents, GRADING_CRITERIA_FIELD.get(current), GRADING_CRITERIA_FIELD);
+            contents.add(new Content(TITLE_FIELD.get(current), TITLE_FIELD));
+            contents.add(new Content(DESCRIPTION_FIELD.get(current), DESCRIPTION_FIELD));
+            contents.add(new Content(TAGS_FIELD.get(current), TAGS_FIELD));
+            contents.add(new Content(PREREQUISITES_FIELD.get(current), PREREQUISITES_FIELD));
+            contents.add(new Content(GRADING_CRITERIA_FIELD.get(current), GRADING_CRITERIA_FIELD));
         } catch (IllegalAccessException e) {
             throw new ChainComponentException(e, false);
         }
         return contents;
-    }
-
-    private static void addIfNotNull(List<Content> contents, Object value, Field field) {
-        if (value != null) {
-            contents.add(new Content(value, field));
-        }
     }
 }

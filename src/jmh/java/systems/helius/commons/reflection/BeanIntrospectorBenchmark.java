@@ -15,6 +15,7 @@ import org.openjdk.jmh.infra.Blackhole;
 import systems.helius.commons.exceptions.IntrospectionException;
 import systems.helius.commons.types.Classroom;
 import systems.helius.commons.types.ClassroomGenerator;
+import systems.helius.commons.types.CourseGenerator;
 import systems.helius.commons.types.Department;
 import systems.helius.commons.types.DepartmentGenerator;
 import systems.helius.commons.types.School;
@@ -97,6 +98,7 @@ public class BeanIntrospectorBenchmark {
     public static class ExecutionPlan {
         private final SchoolGenerator schoolGenerator = new SchoolGenerator();
         private final ClassroomGenerator classroomGenerator = new ClassroomGenerator();
+        private final CourseGenerator courseGenerator = new CourseGenerator();
         private final DepartmentGenerator departmentGenerator = new DepartmentGenerator();
 
         School school;
@@ -134,7 +136,7 @@ public class BeanIntrospectorBenchmark {
                     for (int j = 0; j < SIZES.length; j++) {
                         int courseSize = SIZES[j];
                         classroom.getCourses().add(
-                                classroomGenerator.getCourseGenerator()
+                                courseGenerator
                                         .generateWithSizes(courseSize, courseSize, courseSize));
                     }
                 }
