@@ -2,6 +2,7 @@ package systems.helius.commons.reflection;
 
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
+import systems.helius.commons.exceptions.IntrospectionException;
 import systems.helius.commons.types.School;
 import systems.helius.commons.types.SchoolGenerator;
 
@@ -18,12 +19,7 @@ public class BeanIntrospectorBenchmark {
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
     @Benchmark
-    public void getAllFieldsHierarchical_noCache(Basic inspector, ExecutionPlan plan, Blackhole bh) throws IllegalAccessException {
-        bh.consume(inspector.introspector.seek(String.class, plan.school, LOOKUP));
-    }
-
-    @Benchmark
-    public void getAllFieldsHierarchical_cached(Caching inspector, ExecutionPlan plan, Blackhole bh) throws IllegalAccessException {
+    public void getAllFieldsHierarchical(Caching inspector, ExecutionPlan plan, Blackhole bh) throws IntrospectionException {
         bh.consume(inspector.introspector.seek(String.class, plan.school, LOOKUP));
     }
 
@@ -36,7 +32,7 @@ public class BeanIntrospectorBenchmark {
         @Param({"100", "1000"})
         int nTeachers;
 
-        @Setup(Level.Invocation)
+        @Setup(Level.Iteration)
         public void setupSchool() {
             school = schoolGenerator.generate();
             schoolGenerator.addStudents(school, nStudents);
@@ -52,17 +48,6 @@ public class BeanIntrospectorBenchmark {
         public void initialize() {
             System.out.println("Initializing BeanIntrospector (Cached)");
             introspector = new BeanIntrospector(new CachingClassInspector());
-        }
-    }
-
-    @State(Scope.Benchmark)
-    public static class Basic {
-        BeanIntrospector introspector;
-
-        @Setup(Level.Iteration)
-        public void initializeNotCaching() {
-            System.out.println("Initializing BeanIntrospector");
-            introspector = new BeanIntrospector(new ClassInspector());
         }
     }
 }
