@@ -34,12 +34,7 @@ public sealed class ClassInspector permits CachingClassInspector {
     protected final LookupManager lookupManager;
 
     public ClassInspector() {
-        // Preserve the empty constructor to guarantee future API compatibility
-        this(null);
-    }
-
-    public ClassInspector(@Nullable LookupManager lookupManager) {
-        this.lookupManager = Objects.requireNonNullElseGet(lookupManager, LookupManager::new);
+        this.lookupManager = new LookupManager();
     }
 
     /**

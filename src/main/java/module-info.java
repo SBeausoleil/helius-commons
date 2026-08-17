@@ -1,6 +1,6 @@
 /**
  * Helius-Commons is a utilities library that provides a set of common functionalities and utilities for Java applications.
- * It has a large focus on reflection and meta-programming, providing tools to inspect and manipulate classes, methods, and fields at runtime.
+ * It has a large focus on reflection and metaprogramming, providing tools to inspect and manipulate classes, methods, and fields at runtime.
  */
 module systems.helius.commons {
     requires transitive jakarta.annotation;

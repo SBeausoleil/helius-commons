@@ -91,13 +91,13 @@ public class BeanIntrospectorBenchmark {
     }
 
     /**
-     * Provides one fixed school object graph for each benchmark trial.
+     * Provides one fixed school object graph for each benchmark iteration.
      * This execution plan is meant to be worst-case for the introspector,
      * where the graph is very complex. This exposes more sharply
      * the performance of the BeanIntrospector and its components as a system.
      *
-     * <p>The graph is constructed once per trial via {@link #setupSchool()} and reused
-     * across all benchmark invocations within that trial.</p>
+     * <p>The graph is constructed once per iteration via {@link #setupSchool()} and reused
+     * across all benchmark invocations within that iteration.</p>
      */
     @State(Scope.Benchmark)
     public static class ExecutionPlan {
@@ -109,12 +109,12 @@ public class BeanIntrospectorBenchmark {
         School school;
 
         /**
-         * Builds the fixed-size graph once per trial.
+         * Builds the fixed-size graph once per iteration.
          *
          * <p>Each multi-value field in the graph is populated at every canonical size
          * (0, 1, 5, 15, 30) at least once across all instances of its containing class.</p>
          */
-        @Setup(Level.Trial)
+        @Setup(Level.Iteration)
         public void setupSchool() {
             school = schoolGenerator.generate();
 

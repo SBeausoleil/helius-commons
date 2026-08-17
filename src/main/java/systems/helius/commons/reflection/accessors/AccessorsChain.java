@@ -6,12 +6,20 @@ import systems.helius.commons.reflection.internal.LookupManager;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A composite accessor that checks multiple accessors in order and uses the first one that accepts the current value.
  */
 public class AccessorsChain implements ContentAccessor {
     private List<ContentAccessor> chain;
+    /**
+     * A cache of appropriate accessors for each class, to avoid repeatedly checking the chain for the same class.
+     * The key is the class of the current value, and the value is the first accessor in the chain that accepts that class.
+     * If no accessor accepts a class, it will not be added to the cache, and the chain will be checked again for that class.
+     * This helps improve performance by avoiding redundant checks.
+     */
+    private Map<Class<?>, ContentAccessor> appropriate = new ConcurrentHashMap<>();
 
     protected AccessorsChain(AccessorsChain.Builder builder) {
         this.chain = new ArrayList<>(builder.chain.size() + (builder.lastResortAccessor != null ? 1 : 0));
@@ -57,16 +65,32 @@ public class AccessorsChain implements ContentAccessor {
     public Collection<Content> extract(Object current, @Nullable Field holdingField, IntrospectionContext<?> context, IntrospectionSettings settings) throws ChainComponentException {
         ChainComponentException delayedException = null;
         Collection<Content> extracted = null;
-        for (ContentAccessor chainElement : chain) {
-            if (chainElement.accepts(current.getClass(), holdingField)) {
-                try {
-                    extracted = chainElement.extract(current, holdingField, context, settings);
-                    break;
-                } catch (ChainComponentException e) {
-                    if (!e.isAllowFallback()) {
-                        throw e;
+
+        Class<?> targetClass = current.getClass();
+        ContentAccessor accessor = this.appropriate.get(targetClass);
+        if (accessor != null) {
+            try {
+                extracted = accessor.extract(current, holdingField, context, settings);
+            } catch (ChainComponentException e) {
+                if (!e.isAllowFallback()) {
+                    throw e;
+                }
+                delayedException = e;
+            }
+        }
+        if (extracted == null) {
+            for (ContentAccessor chainElement : chain) {
+                if (chainElement.accepts(targetClass, holdingField)) {
+                    try {
+                        extracted = chainElement.extract(current, holdingField, context, settings);
+                        this.appropriate.put(targetClass, chainElement);
+                        break;
+                    } catch (ChainComponentException e) {
+                        if (!e.isAllowFallback()) {
+                            throw e;
+                        }
+                        delayedException = e;
                     }
-                    delayedException = e;
                 }
             }
         }
