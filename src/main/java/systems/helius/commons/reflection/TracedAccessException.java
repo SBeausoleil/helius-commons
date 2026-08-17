@@ -68,7 +68,6 @@ public class TracedAccessException extends Exception {
      * The object at the root of the search.
      * <p>
      *     Is null if the unwinding is not finished.
-     * </p>
      * @return the root of the search that failed.
      */
     @Nullable

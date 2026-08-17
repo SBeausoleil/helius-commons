@@ -24,7 +24,6 @@ public final class TimeUtils {
      * <p>
      * Useful for comparing data from a runtime against it's persisted equivalent where the persistence layer
      * may have stripped some precision.
-     * </p>
      * <p>
      * The order of verification is as following:
      * <ol>
@@ -41,17 +40,14 @@ public final class TimeUtils {
      * The comparison is done starting from the first level of precision supported by any of the arguments.
      * If the lowest precision level is not supported by both arguments, they are not considered equivalent.
      * e.g.:
-     * </p>
      * <p>
      * <code>
      * 2026-03-12 02:02:48.364016  ==  2026-03-12 02:02:48.364016012  (Everything up to the millisecond (inclusive) is equal)
      * </code>
-     * </p>
      * <p>
      * <code>
      * 2026-03-12 02:02:48.364016  !=  2026-03-12 02:01:48.364016     (The minutes are different, so they are not roughly equal)
      * </code>
-     * </p>
      *
      * @param a the first temporal
      * @param b the second temporal
@@ -66,7 +62,6 @@ public final class TimeUtils {
      * <p>
      * Useful for comparing data from a runtime against it's persisted equivalent where the persistence layer
      * may have stripped some precision.
-     * </p>
      * <p>
      * The order of verification is as following:
      * <ol>
@@ -83,17 +78,14 @@ public final class TimeUtils {
      * The comparison is done starting from the first level of precision supported by any of the arguments.
      * If the lowest precision level is not supported by both arguments, they are not considered equivalent.
      * e.g.:
-     * </p>
      * <p>
      * <code>
      * 2026-03-12 02:02:48.364016  ==  2026-03-12 02:02:48.364016012  (Everything up to the millisecond (inclusive) is equal)
      * </code>
-     * </p>
      * <p>
      * <code>
      * 2026-03-12 02:02:48.364016  !=  2026-03-12 02:01:48.364016     (The minutes are different, so they are not roughly equal)
      * </code>
-     * </p>
      *
      * @param a    the first temporal
      * @param b    the second temporal

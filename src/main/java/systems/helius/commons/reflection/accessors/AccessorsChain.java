@@ -229,7 +229,6 @@ public class AccessorsChain implements ContentAccessor {
          * <p>
          * If defaults have been enabled or the {@link FieldHandlesAccessor} is enabled, the given argument
          * will be before the FieldsHandlesAccessor, since it accepts everything.
-         * </p>
          */
         public Builder addLast(ContentAccessor accessor) {
             chain.addLast(accessor);

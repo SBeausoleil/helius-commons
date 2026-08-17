@@ -27,7 +27,6 @@ public interface ContentAccessor {
      * <p>
      * There may be more than one Content instance per field, and thus multiple values for a single field.
      * This is particularly relevant for collections and the likes.
-     * </p>
      *
      * @param current      the current value to access the innards of.
      * @param holdingField the field that contained the current value.

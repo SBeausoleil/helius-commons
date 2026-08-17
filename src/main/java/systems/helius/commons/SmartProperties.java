@@ -24,7 +24,6 @@ public class SmartProperties extends Properties {
      * Attempt to get a boolean from the properties.
      * <p>
      *     The following patterns are supported:
-     * </p>
      * <ul>
      *     <li>true | false</li>
      *     <li>yes | no</li>

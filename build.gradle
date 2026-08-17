@@ -2,14 +2,14 @@ import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
     id "java-library"
-    id "com.vanniktech.maven.publish" version "0.30.0"
+    id "com.vanniktech.maven.publish" version "0.32.0"
     id "signing"
     id "me.champeau.jmh" version "0.7.2"
     id "java-test-fixtures"
 }
 
 group = "systems.helius"
-version = "0.7.0"
+version = "0.7.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -49,6 +49,7 @@ mavenPublishing {
         name = "Helius Commons"
         description = "A common utilities library with a focus on reflective programming."
         url = "https://github.com/SBeausoleil/helius-commons"
+        inceptionYear = "2024"
         licenses {
             license {
                 name = "MIT Licence"
