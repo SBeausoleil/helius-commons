@@ -3,6 +3,7 @@ package systems.helius.commons.reflection.accessors;
 import jakarta.annotation.Nullable;
 import systems.helius.commons.exceptions.LoookupAcquisitionException;
 import systems.helius.commons.reflection.*;
+import systems.helius.commons.reflection.internal.LookupManager;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;

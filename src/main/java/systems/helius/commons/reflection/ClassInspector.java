@@ -4,6 +4,7 @@ import jakarta.annotation.Nullable;
 import systems.helius.commons.annotations.Unstable;
 import systems.helius.commons.collections.BiDirectionalMap;
 import systems.helius.commons.exceptions.LoookupAcquisitionException;
+import systems.helius.commons.reflection.internal.LookupManager;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -30,7 +31,7 @@ public sealed class ClassInspector permits CachingClassInspector {
         PRIMITIVE_WRAPPERS.put(Character.class, char.class);
     }
 
-    protected LookupManager lookupManager;
+    protected final LookupManager lookupManager;
 
     public ClassInspector() {
         // Preserve the empty constructor to guarantee future API compatibility

@@ -5,7 +5,7 @@ import systems.helius.commons.exceptions.LoookupAcquisitionException;
 import systems.helius.commons.reflection.ClassInspector;
 import systems.helius.commons.reflection.IntrospectionContext;
 import systems.helius.commons.reflection.IntrospectionSettings;
-import systems.helius.commons.reflection.LookupManager;
+import systems.helius.commons.reflection.internal.LookupManager;
 import systems.helius.commons.reflection.TracedAccessException;
 
 import java.lang.invoke.MethodHandles;

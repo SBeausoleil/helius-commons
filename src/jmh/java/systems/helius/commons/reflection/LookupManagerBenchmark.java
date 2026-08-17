@@ -13,6 +13,7 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 import systems.helius.commons.exceptions.LoookupAcquisitionException;
+import systems.helius.commons.reflection.internal.LookupManager;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.TimeUnit;

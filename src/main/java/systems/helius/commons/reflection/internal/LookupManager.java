@@ -1,7 +1,6 @@
-package systems.helius.commons.reflection;
+package systems.helius.commons.reflection.internal;
 
 import jakarta.annotation.Nullable;
-import systems.helius.commons.annotations.Internal;
 import systems.helius.commons.exceptions.LoookupAcquisitionException;
 
 import java.lang.invoke.MethodHandles;
@@ -65,7 +64,6 @@ public class LookupManager {
      * @throws LoookupAcquisitionException if neither the caller nor any fallback can grant private
      *                                     access to {@code target}.
      */
-    @Internal // TODO restrict access to module
     public Lookup getPrivilegedLookup(Class<?> target, Lookup caller, Lookup... fallbacks)
             throws LoookupAcquisitionException {
         // Read the cache once: a memoized lookup is full-power and valid for every entitled caller.

@@ -1,4 +1,4 @@
-package systems.helius.commons.reflection;
+package systems.helius.commons.reflection.internal;
 
 import org.junit.jupiter.api.Test;
 import systems.helius.commons.exceptions.LoookupAcquisitionException;
