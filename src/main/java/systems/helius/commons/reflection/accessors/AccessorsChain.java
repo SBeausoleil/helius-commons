@@ -22,9 +22,9 @@ public class AccessorsChain implements ContentAccessor {
     private Map<Class<?>, ContentAccessor> appropriate = new ConcurrentHashMap<>();
 
     protected AccessorsChain(AccessorsChain.Builder builder) {
-        this.chain = new ArrayList<>(builder.chain.size() + (builder.lastResortAccessor != null ? 1 : 0));
+        this.chain = new ArrayList<>(builder.chain.size() + (builder.lastResortEnabled ? 1 : 0));
         this.chain.addAll(builder.chain);
-        if (builder.lastResortAccessor != null) {
+        if (builder.lastResortEnabled) {
             this.chain.add(builder.lastResortAccessor);
         }
     }
@@ -107,8 +107,8 @@ public class AccessorsChain implements ContentAccessor {
     public static class Builder {
         protected final LinkedList<ContentAccessor> chain = new LinkedList<>();
         protected ClassInspector classInspector;
-        @Nullable
-        protected ContentAccessor lastResortAccessor;
+        protected FieldHandlesAccessor lastResortAccessor;
+        protected boolean lastResortEnabled = false;
 
         /**
          * Construct a new accessor with the default built-in accessors.
@@ -129,11 +129,14 @@ public class AccessorsChain implements ContentAccessor {
          *                     </ol>
          */
         public Builder(boolean withDefaults) {
+            var lookupManager = new LookupManager();
+            this.classInspector = new ClassInspector(lookupManager);
+            this.lastResortAccessor = new FieldHandlesAccessor(new CachingClassInspector(lookupManager), lookupManager);
             if (withDefaults) {
-                chain.add(new ArrayAccessor()); // TODO test if the array accessor is not present, if it risks throwing
-                chain.add(new IterativeAccessor());
-                chain.add(new IterativeMapAccessor());
-                lastResortAccessor = new FieldHandlesAccessor(new CachingClassInspector(), new LookupManager());
+                this.chain.add(new ArrayAccessor());
+                this.chain.add(new IterativeAccessor());
+                this.chain.add(new IterativeMapAccessor());
+                this.lastResortEnabled = true;
             }
         }
 
@@ -160,20 +163,12 @@ public class AccessorsChain implements ContentAccessor {
                                         + " returned " + (replacement == null ? "null" : replacement.getClass().getName())
                                         + ", which is not a ContentAccessor");
                     }
-                    iterator.set(chainElement);
+                    iterator.set((ContentAccessor) replacement);
                 }
             }
 
             // Update the last resort accessor
-            if (lastResortAccessor instanceof ClassInspectorAware<?> aware) {
-                Object replacement = aware.replaceClassInspector(classInspector);
-                if (!(replacement instanceof ContentAccessor)) {
-                    throw new IllegalStateException("replaceClassInspector on lastResortAccessor" +
-                            " returned " + (replacement == null ? "null" : replacement.getClass().getName())
-                            + ", which is not a ContentAccessor");
-                }
-                iterator.set(lastResortAccessor);
-            }
+            lastResortAccessor = lastResortAccessor.replaceClassInspector(classInspector);
             return this;
         }
 
@@ -217,11 +212,7 @@ public class AccessorsChain implements ContentAccessor {
          * @return this builder
          */
         public Builder enableLastResortAccessor(boolean enable) {
-            if (enable) {
-                this.lastResortAccessor = new FieldHandlesAccessor(this.classInspector, new LookupManager());
-            } else {
-                this.lastResortAccessor = null;
-            }
+            this.lastResortEnabled = enable;
             return this;
         }
 

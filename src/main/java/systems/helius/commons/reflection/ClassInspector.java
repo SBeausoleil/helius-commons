@@ -37,6 +37,10 @@ public sealed class ClassInspector permits CachingClassInspector {
         this.lookupManager = new LookupManager();
     }
 
+    public ClassInspector(LookupManager lookupManager) {
+        this.lookupManager = lookupManager;
+    }
+
     /**
      * Get all the fields that are present in members of a given class.
      * Recursively checks up into the class tree of clazz to accumulate members.

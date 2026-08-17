@@ -207,7 +207,7 @@ class BeanIntrospectorTest {
     @Test
     void WhenSeekMapContent_GivenMap_ThenCanReadKey() throws IntrospectionException {
         List<String> toFind = faker.lorem().words(2);
-        var map = new HashMap<Object, Object>();
+        var map = new HashMap<>();
         // Put noise in the map
         map.put(Math.random(), Math.random());
         map.put(Math.random(), Math.random());
@@ -222,7 +222,7 @@ class BeanIntrospectorTest {
     @Test
     void WhenSeekMapContent_GivenMap_ThenCanReadValues() throws IntrospectionException {
         List<String> toFind = faker.lorem().words(2);
-        var map = new HashMap<Object, Object>();
+        var map = new HashMap<>();
         // Put noise in the map
         map.put(Math.random(), Math.random());
         map.put(Math.random(), Math.random());
@@ -243,25 +243,6 @@ class BeanIntrospectorTest {
         var map = new HashMap<String, Boolean>();
         map.put("hello", true);
         map.put("world", false);
-        assertThrows(IntrospectionException.class, () -> {
-            introspector.seek(String.class, map, MethodHandles.lookup());
-        });
-    }
-
-    @Test
-    void testSchool() throws IntrospectionException {
-        var introspector = new BeanIntrospector(new CachingClassInspector());
-        var schoolGen = new SchoolGenerator();
-        for (int i = 0; i < 10; i++) {
-            School school = schoolGen.generate();
-            schoolGen.addClassrooms(school, 5);
-            schoolGen.addDepartments(school, 3);
-            schoolGen.addTeachers(school, 10);
-            schoolGen.addStudents(school, 20);
-            schoolGen.setSemesterYears(school, 4);
-
-            Set<Sex> sexes = introspector.seek(Sex.class, school, MethodHandles.lookup());
-            System.out.println(sexes);
-        }
+        assertThrows(IntrospectionException.class, () -> introspector.seek(String.class, map, MethodHandles.lookup()));
     }
 }

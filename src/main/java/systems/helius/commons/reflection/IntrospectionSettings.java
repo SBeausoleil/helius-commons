@@ -60,9 +60,10 @@ public class IntrospectionSettings {
     public Builder toBuilder() {
         return new Builder()
                 .withSafeAccessCheck(safeAccessCheck)
-                .withSkipOnException(null)
+                .withSkipOnException(skipOnException)
                 .withEnterTargetType(enterTargetType)
-                .withMaxDepth(maxDepth);
+                .withMaxDepth(maxDepth)
+                .withContentAccessor(contentAccessor);
     }
 
     public boolean useSafeAccessCheck() {
