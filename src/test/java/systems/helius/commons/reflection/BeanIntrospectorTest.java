@@ -207,7 +207,7 @@ class BeanIntrospectorTest {
     @Test
     void WhenSeekMapContent_GivenMap_ThenCanReadKey() throws IntrospectionException {
         List<String> toFind = faker.lorem().words(2);
-        var map = new HashMap<Object, Object>();
+        var map = new HashMap<>();
         // Put noise in the map
         map.put(Math.random(), Math.random());
         map.put(Math.random(), Math.random());
@@ -222,7 +222,7 @@ class BeanIntrospectorTest {
     @Test
     void WhenSeekMapContent_GivenMap_ThenCanReadValues() throws IntrospectionException {
         List<String> toFind = faker.lorem().words(2);
-        var map = new HashMap<Object, Object>();
+        var map = new HashMap<>();
         // Put noise in the map
         map.put(Math.random(), Math.random());
         map.put(Math.random(), Math.random());
@@ -236,14 +236,13 @@ class BeanIntrospectorTest {
 
     @Test
     void WhenSeekMapContent_GivenUseUnsafeAccessAndOutOfModuleCode_ThenFail() {
-        var settings = new IntrospectionSettings();
-        settings.setSafeAccessCheck(false);
+        var settings = IntrospectionSettings.builder()
+                .withSafeAccessCheck(false)
+                .build();
         var introspector = new BeanIntrospector(settings);
         var map = new HashMap<String, Boolean>();
         map.put("hello", true);
         map.put("world", false);
-        assertThrows(IntrospectionException.class, () -> {
-            introspector.seek(String.class, map, MethodHandles.lookup());
-        });
+        assertThrows(IntrospectionException.class, () -> introspector.seek(String.class, map, MethodHandles.lookup()));
     }
 }

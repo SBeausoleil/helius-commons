@@ -95,12 +95,15 @@ public final class TimeUtils {
      * </code>
      * </p>
      *
-     * @param a                 the first temporal
-     * @param b                 the second temporal
-     * @param ignoreSmallerThan (optional) all temporal units smaller than this unit (exclusive) are ignored for the comparison, e.g. if this is ChronoUnit.SECONDS, all units smaller than seconds are ignored
+     * @param a    the first temporal
+     * @param b    the second temporal
+     * @param upTo (optional) compared temporals must be equal up to this unit of time, inclusively.
+     *             If both temporals dropped support at the same time before reaching this unit and were equal up to that point,
+     *             they will be considered equal.
+     *             e.g. if this is ChronoUnit.SECONDS, all units smaller than seconds are ignored
      * @return true if both are equals up to their smallest shared temporal unit. True if both temporals are null. False if only one is null.
      */
-    public static boolean isRoughlyEqual(@Nullable TemporalAccessor a, @Nullable TemporalAccessor b, @Nullable ChronoField ignoreSmallerThan) {
+    public static boolean isRoughlyEqual(@Nullable TemporalAccessor a, @Nullable TemporalAccessor b, @Nullable ChronoField upTo) {
         if (a == b) {
             return true;
         }
@@ -108,31 +111,31 @@ public final class TimeUtils {
             return false;
         }
 
-        boolean equalUpToNow = false;
+        ChronoField equalUpTo = null;
+        boolean truncationDetected = false;
         for (ChronoField chronoField : CHECKED_FIELDS) {
-            if (ignoreSmallerThan != null && chronoField.compareTo(ignoreSmallerThan) < 0) {
-                break;
+            if (upTo != null && chronoField.compareTo(upTo) < 0) {
+                break; // Boundary reached
             }
             if (a.isSupported(chronoField) != b.isSupported(chronoField)) {
-                return equalUpToNow;
+                break; // Both drop support at the same time
             }
             if (!a.isSupported(chronoField)) {
-                continue;
+                continue; // Both don't support this field, move to the next one
             }
             int aFieldValue = a.get(chronoField);
             int bFieldValue = b.get(chronoField);
             if (aFieldValue != bFieldValue) {
-                if (aFieldValue == 0 && isPrecisionTruncatedAt(a, chronoField)) {
-                    return equalUpToNow;
+                if (aFieldValue == 0 && isPrecisionTruncatedAt(a, chronoField)
+                        || bFieldValue == 0 && isPrecisionTruncatedAt(b, chronoField)) {
+                    return upTo == null && equalUpTo != null; // Truncation
                 }
-                if (bFieldValue == 0 && isPrecisionTruncatedAt(b, chronoField)) {
-                    return equalUpToNow;
-                }
-                return false;
+                return false; // Difference detected without truncation
             }
-            equalUpToNow = true;
+            equalUpTo = chronoField;
         }
-        return true;
+        // We have no bounds and all shared fields are equal, so they are roughly equal
+        return equalUpTo != null;
     }
 
     /**
@@ -149,7 +152,8 @@ public final class TimeUtils {
             }
             if (temporal.isSupported(level)) {
                 int value = switch (level) {
-                    case MICRO_OF_SECOND, NANO_OF_SECOND -> temporal.get(level) % 1000; // Modulo to avoid getting the upper subsecond units
+                    case MICRO_OF_SECOND, NANO_OF_SECOND ->
+                            temporal.get(level) % 1000; // Modulo to avoid getting the upper subsecond units
                     default -> temporal.get(level);
                 };
                 if (value != 0)

@@ -10,6 +10,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import systems.helius.commons.reflection.BeanIntrospectorBenchmark;
 import systems.helius.commons.reflection.ClassInspectorBenchmark;
+import systems.helius.commons.reflection.LookupManagerBenchmark;
 
 import java.util.concurrent.TimeUnit;
 
@@ -20,6 +21,7 @@ public class JmhRunner {
         Options opt = new OptionsBuilder()
                 .include(BeanIntrospectorBenchmark.class.getName())
                 .include(ClassInspectorBenchmark.class.getName())
+                .include(LookupManagerBenchmark.class.getName())
                 .build();
 
         new Runner(opt).run();

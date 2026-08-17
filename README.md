@@ -1,8 +1,12 @@
 # Common utilities library
+
+Helius Commons is a library of common utilities for Java. It is designed to be used in any Java project, and it is compatible with Java 17 and above.
+It has an accent on code reflection and introspection.
+
 [Published on Maven Central:](https://central.sonatype.com/artifact/systems.helius/helius-commons)
 
 ```
-implementation group: 'systems.helius', name: 'helius-commons', version: '0.4.0'
+implementation group: 'systems.helius', name: 'helius-commons', version: '0.7.0'
 ```
 
 

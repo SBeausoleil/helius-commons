@@ -3,6 +3,7 @@ package systems.helius.commons.reflection.accessors;
 import jakarta.annotation.Nullable;
 import systems.helius.commons.exceptions.LoookupAcquisitionException;
 import systems.helius.commons.reflection.*;
+import systems.helius.commons.reflection.internal.LookupManager;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
@@ -12,7 +13,7 @@ import java.util.*;
 /**
  * Accessor that uses Fields and VarHandles to access fields of classes directly.
  */
-public class FieldHandlesAccessor implements ContentAccessor {
+public class FieldHandlesAccessor implements ContentAccessor, ClassInspectorAware<FieldHandlesAccessor> {
     private final ClassInspector classInspector;
     private final LookupManager lookupManager;
 
@@ -22,7 +23,7 @@ public class FieldHandlesAccessor implements ContentAccessor {
     }
 
     @Override
-    public boolean accepts(Object current, @Nullable Field holdingField, IntrospectionSettings settings) {
+    public boolean accepts(Class<?> current, @Nullable Field holdingField) {
         return true;
     }
 
@@ -57,11 +58,13 @@ public class FieldHandlesAccessor implements ContentAccessor {
                         result.add(new Content(value, field));
                     }
                 } catch (IllegalAccessException e) {
-                    var traced = new TracedAccessException("Couldn't read the value of the field: " + field
-                            + ". This should be impossible. " +
-                            "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues" +
-                            " describing how this happened.", e);
-                    throw new ChainComponentException(traced, true);
+                    if (!settings.useSafeAccessCheck()) {
+                        var traced = new TracedAccessException("Couldn't read the value of the field: " + field
+                                + ". This should be impossible. " +
+                                "Please file an issue at https://github.com/SBeausoleil/helius-commons/issues" +
+                                " describing how this happened.", e);
+                        throw new ChainComponentException(traced, true);
+                    }
                 }
             }
         }
@@ -74,5 +77,10 @@ public class FieldHandlesAccessor implements ContentAccessor {
         } catch (LoookupAcquisitionException e) {
             throw new ChainComponentException(e, true);
         }
+    }
+
+    @Override
+    public FieldHandlesAccessor replaceClassInspector(ClassInspector classInspector) {
+        return new FieldHandlesAccessor(classInspector, this.lookupManager);
     }
 }

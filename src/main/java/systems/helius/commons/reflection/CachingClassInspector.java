@@ -1,6 +1,7 @@
 package systems.helius.commons.reflection;
 
 import systems.helius.commons.annotations.Unstable;
+import systems.helius.commons.reflection.internal.LookupManager;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -10,6 +11,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class CachingClassInspector extends ClassInspector {
     private final Map<Class<?>, Map<Class<?>, List<Field>>> hierarchyCache = new ConcurrentHashMap<>();
     private final Map<Class<?>, List<Field>> flatCache = new ConcurrentHashMap<>();
+
+    public CachingClassInspector() {
+        super();
+    }
+
+    public CachingClassInspector(LookupManager lookupManager) {
+        super(lookupManager);
+    }
 
     /**
      * Get all the fields that are present in members of a given class.
