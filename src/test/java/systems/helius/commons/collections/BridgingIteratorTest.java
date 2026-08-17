@@ -1,8 +1,8 @@
 package systems.helius.commons.collections;
 
 import org.junit.jupiter.api.Test;
-import systems.helius.commons.types.Foo;
-import systems.helius.commons.types.FooGenerator;
+import systems.helius.commons.fixtures.Foo;
+import systems.helius.commons.fixtures.FooGenerator;
 
 import java.util.*;
 

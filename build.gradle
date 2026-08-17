@@ -5,7 +5,6 @@ plugins {
     id "com.vanniktech.maven.publish" version "0.35.0"
     id "signing"
     id "me.champeau.jmh" version "0.7.2"
-    id "java-test-fixtures"
 }
 
 group = "systems.helius"
@@ -27,17 +26,32 @@ dependencies {
     testImplementation platform("org.junit:junit-bom:5.10.0")
     testImplementation "org.junit.jupiter:junit-jupiter"
 
-    testFixturesApi "io.github.sbeausoleil:factorium:2.1.0"
-    testFixturesImplementation "jakarta.annotation:jakarta.annotation-api:3.0.0"
-    testFixturesCompileOnly "org.projectlombok:lombok:1.18.36"
-    testFixturesAnnotationProcessor "org.projectlombok:lombok:1.18.36"
+    testImplementation "io.github.sbeausoleil:factorium:2.1.0"
+    testImplementation "jakarta.annotation:jakarta.annotation-api:3.0.0"
+    testCompileOnly "org.projectlombok:lombok:1.18.36"
+    testAnnotationProcessor "org.projectlombok:lombok:1.18.36"
 
     jmhImplementation "org.openjdk.jmh:jmh-core:1.37"
     jmhAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:1.37"
+    jmhCompileOnly( "org.projectlombok:lombok:1.18.36")
+    jmhAnnotationProcessor("org.projectlombok:lombok:1.18.36")
 }
 
 test {
     useJUnitPlatform()
+}
+
+// Do not use java-test-fixtures plugin as it causes the fixtures to be published to Maven Central.
+sourceSets {
+    jmh {
+        compileClasspath += sourceSets.test.output
+        runtimeClasspath += sourceSets.test.output
+    }
+}
+
+configurations {
+    jmhImplementation.extendsFrom(testImplementation)
+    jmhRuntimeOnly.extendsFrom(testRuntimeOnly)
 }
 
 mavenPublishing {

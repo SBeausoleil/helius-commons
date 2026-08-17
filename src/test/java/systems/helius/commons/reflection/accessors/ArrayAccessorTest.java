@@ -1,7 +1,7 @@
 package systems.helius.commons.reflection.accessors;
 
 import org.junit.jupiter.api.Test;
-import systems.helius.commons.types.Foo;
+import systems.helius.commons.fixtures.Foo;
 
 import static org.junit.jupiter.api.Assertions.*;
 

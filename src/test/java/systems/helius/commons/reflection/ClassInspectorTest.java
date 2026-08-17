@@ -1,9 +1,9 @@
 package systems.helius.commons.reflection;
 
 import org.junit.jupiter.api.Test;
-import systems.helius.commons.types.ChildClassA;
-import systems.helius.commons.types.Foo;
-import systems.helius.commons.types.Superclass;
+import systems.helius.commons.fixtures.ChildClassA;
+import systems.helius.commons.fixtures.Foo;
+import systems.helius.commons.fixtures.Superclass;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;

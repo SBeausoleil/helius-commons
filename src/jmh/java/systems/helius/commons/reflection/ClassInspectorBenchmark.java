@@ -25,11 +25,11 @@ public class ClassInspectorBenchmark {
     @State(Scope.Benchmark)
     public static class ExecutionPlan {
         @Param(value = {
-                "systems.helius.commons.types.Foo",
-                "systems.helius.commons.types.DataClass",
-                "systems.helius.commons.types.ChildClassA",
-                "systems.helius.commons.types.ChildClassB",
-                "systems.helius.commons.types.ComplexChild"
+                "systems.helius.commons.fixtures.Foo",
+                "systems.helius.commons.fixtures.DataClass",
+                "systems.helius.commons.fixtures.ChildClassA",
+                "systems.helius.commons.fixtures.ChildClassB",
+                "systems.helius.commons.fixtures.ComplexChild"
         })
         String className;
 
