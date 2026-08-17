@@ -23,7 +23,7 @@ document exists to support it.
 - [Key concepts](#key-concepts)
 - [Important collaborators](#important-collaborators)
 - [Error handling](#error-handling)
-- [Gotchas & guarantees](#gotchas--guarantees)
+- [Guarantees](#guarantees)
 
 ---
 
@@ -97,13 +97,13 @@ none is supplied, sensible defaults are used.
 ```java
 import systems.helius.commons.reflection.*;
 
-IntrospectionSettings settings = IntrospectionSettings.builder()
+var settings = IntrospectionSettings.builder()
         .withMaxDepth(10)             // stop descending after 10 levels
         .withEnterTargetType(false)   // don't search into matches
         .withSafeAccessCheck(true)    // skip values that can't be legally accessed
         .build();
 
-BeanIntrospector introspector = new BeanIntrospector(settings);
+var introspector = new BeanIntrospector(settings);
 ```
 
 | Setting           | Default             | Effect                                                                                          |
@@ -116,8 +116,7 @@ BeanIntrospector introspector = new BeanIntrospector(settings);
 You may also supply your own `ClassInspector` (e.g. a shared cache):
 
 ```java
-BeanIntrospector introspector =
-        new BeanIntrospector(settings, new CachingClassInspector());
+var introspector = new BeanIntrospector(settings, new CachingClassInspector());
 ```
 
 ---
@@ -280,16 +279,16 @@ their contents are not subject to this access check, as they are expected to be 
 
 | Type                       | Role                                                                                                       |
 |----------------------------|------------------------------------------------------------------------------------------------------------|
-| `IntrospectionSettings`    | Immutable, builder-created configuration for a search.                                                      |
+| `IntrospectionSettings`    | Immutable, builder-created configuration for a search.                                                     |
 | `IntrospectionContext<T>`  | Per-search record carrying the target type, root lookup, `found` set, `visited` set, and content accessor. |
 | `ClassInspector`           | Inspects a class's field hierarchy and performs type-match logic. `CachingClassInspector` memoises it.     |
 | `ContentAccessor`          | Strategy interface: "extract the inner values of this object." See the per-accessor docs.                  |
 | `AccessorsChain`           | The default `ContentAccessor`; the registry/source of all built-in accessors.                              |
 | `Content`                  | A record `(Object value, Field holdingField)` — one unit of work passed back to the DFS loop.              |
 | `LookupManager`            | Acquires privileged `MethodHandles.Lookup` instances for target classes.                                   |
-| `ChainComponentException`  | Raised by an accessor when extraction fails; carries an `allowFallback` flag.                               |
+| `ChainComponentException`  | Raised by an accessor when extraction fails; carries an `allowFallback` flag.                              |
 | `TracedAccessException`    | Internal exception accumulating the field path to a fatal access error.                                    |
-| `IntrospectionException`   | Public checked exception thrown by `seek` on fatal failures.                                                |
+| `IntrospectionException`   | Public checked exception thrown by `seek` on fatal failures.                                               |
 
 The built-in accessors are documented individually:
 
@@ -321,7 +320,7 @@ With the default settings (`safeAccessCheck = true`), inaccessible values are si
 
 ---
 
-## Gotchas & guarantees
+## Guarantees
 
 - **Identity, not equality.** The result `Set` compares by `==`.
 - **Provide your own lookup.** Always pass `MethodHandles.lookup()` from your own code, not a cached
